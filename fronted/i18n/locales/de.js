@@ -1,0 +1,83 @@
+// Deutsche Sprachdatei
+export default {
+  app: {
+    title: 'Zahlungsverarbeitungssystem',
+    navList: 'Zahlungen',
+    navCreate: 'Erstellen'
+  },
+  language: {
+    label: 'Sprache',
+    zh: '中文',
+    en: 'English',
+    de: 'Deutsch'
+  },
+  list: {
+    title: 'Zahlungsliste',
+    newPayment: 'Neue Zahlung',
+    status: 'Status',
+    allStatuses: 'Alle Status',
+    keyword: 'Stichwort',
+    keywordPlaceholder: 'Nach Zahlungs-ID oder Bemerkung suchen',
+    search: 'Suchen',
+    reset: 'Zurücksetzen',
+    columns: {
+      index: '#',
+      paymentId: 'Zahlungs-ID',
+      fromAccount: 'Von Konto',
+      toAccount: 'An Konto',
+      amount: 'Betrag',
+      status: 'Status',
+      remark: 'Bemerkung',
+      createdAt: 'Erstellt am'
+    },
+    empty: 'Keine Zahlungen gefunden'
+  },
+  create: {
+    title: 'Zahlung erstellen',
+    fromAccount: 'Von Konto',
+    fromAccountPlaceholder: 'z. B. ACC10001',
+    toAccount: 'An Konto',
+    toAccountPlaceholder: 'z. B. ACC20002',
+    amount: 'Betrag',
+    currency: 'Währung',
+    currencyPlaceholder: 'Währung auswählen',
+    remark: 'Bemerkung',
+    remarkPlaceholder: 'Optionale Notiz, z. B. invoice-2026-07',
+    idempotencyKey: 'Idempotenzschlüssel',
+    regenerate: 'Neu generieren',
+    submit: 'Zahlung absenden',
+    reset: 'Zurücksetzen',
+    submitSuccess: 'Zahlung erfolgreich übermittelt',
+    validation: {
+      fromRequired: 'Von Konto ist erforderlich',
+      toRequired: 'An Konto ist erforderlich',
+      toDifferent: 'An Konto muss sich von Von Konto unterscheiden',
+      amountRequired: 'Betrag ist erforderlich',
+      amountRange: 'Der Betrag muss zwischen 0,01 und 1.000.000 liegen',
+      currencyRequired: 'Währung ist erforderlich',
+      idempotencyRequired: 'Idempotenzschlüssel ist erforderlich'
+    }
+  },
+  detail: {
+    title: 'Zahlungsdetails',
+    basicInfo: 'Grundinformationen',
+    paymentId: 'Zahlungs-ID',
+    idempotencyKey: 'Idempotenzschlüssel',
+    fromAccount: 'Von Konto',
+    toAccount: 'An Konto',
+    amount: 'Betrag',
+    currency: 'Währung',
+    remark: 'Bemerkung',
+    createdAt: 'Erstellt am',
+    updatedAt: 'Aktualisiert am',
+    errorCode: 'Fehlercode',
+    unknown: 'UNBEKANNT',
+    noErrorMessage: 'Keine Fehlermeldung angegeben',
+    statusHistory: 'Statusverlauf',
+    start: 'START'
+  },
+  http: {
+    requestFailed: 'Anfrage fehlgeschlagen',
+    networkError: 'Netzwerkfehler bei der Anfrage'
+  }
+};

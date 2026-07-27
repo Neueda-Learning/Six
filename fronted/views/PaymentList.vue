@@ -3,25 +3,25 @@
   <el-card class="list-page" shadow="never">
     <template #header>
       <div class="card-header">
-        <span class="card-title">Payment List</span>
+        <span class="card-title">{{ t('list.title') }}</span>
         <el-button type="primary" :icon="CirclePlus" @click="router.push('/payments/create')">
-          New Payment
+          {{ t('list.newPayment') }}
         </el-button>
       </div>
     </template>
 
     <!-- 筛选栏：状态下拉 + 关键字输入 + 查询/重置按钮 -->
     <el-form :inline="true" class="filter-bar">
-      <el-form-item label="Status">
-        <el-select v-model="query.status" placeholder="All statuses" clearable style="width: 180px">
+      <el-form-item :label="t('list.status')">
+        <el-select v-model="query.status" :placeholder="t('list.allStatuses')" clearable style="width: 180px">
           <el-option v-for="item in statusOptions" :key="item" :label="item" :value="item" />
         </el-select>
       </el-form-item>
 
-      <el-form-item label="Keyword">
+      <el-form-item :label="t('list.keyword')">
         <el-input
           v-model="query.keyword"
-          placeholder="Search by payment ID or remark"
+          :placeholder="t('list.keywordPlaceholder')"
           clearable
           :prefix-icon="Search"
           style="width: 240px"
@@ -29,8 +29,8 @@
       </el-form-item>
 
       <el-form-item>
-        <el-button type="primary" :icon="Search" @click="handleSearch">Search</el-button>
-        <el-button :icon="RefreshLeft" @click="handleReset">Reset</el-button>
+        <el-button type="primary" :icon="Search" @click="handleSearch">{{ t('list.search') }}</el-button>
+        <el-button :icon="RefreshLeft" @click="handleReset">{{ t('list.reset') }}</el-button>
       </el-form-item>
     </el-form>
 
@@ -43,26 +43,26 @@
       class="clickable-table"
       stripe
     >
-      <el-table-column type="index" label="#" width="56" />
-      <el-table-column prop="id" label="Payment ID" width="110" />
-      <el-table-column prop="fromAccount" label="From Account" min-width="130" />
-      <el-table-column prop="toAccount" label="To Account" min-width="130" />
-      <el-table-column label="Amount" width="150" align="right">
+      <el-table-column type="index" :label="t('list.columns.index')" width="56" />
+      <el-table-column prop="id" :label="t('list.columns.paymentId')" width="110" />
+      <el-table-column prop="fromAccount" :label="t('list.columns.fromAccount')" min-width="130" />
+      <el-table-column prop="toAccount" :label="t('list.columns.toAccount')" min-width="130" />
+      <el-table-column :label="t('list.columns.amount')" width="150" align="right">
         <template #default="{ row }">
           <span class="amount-cell">{{ row.amount }} {{ row.currency }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="Status" width="130" align="center">
+      <el-table-column :label="t('list.columns.status')" width="130" align="center">
         <template #default="{ row }">
           <!-- 状态标签颜色映射：COMPLETED 绿色、FAILED 红色、SENT 黄色、CREATED/VALIDATED 灰蓝 -->
           <el-tag :type="statusTagType(row.status)" effect="light">{{ row.status }}</el-tag>
         </template>
       </el-table-column>
-      <el-table-column prop="remark" label="Remark" show-overflow-tooltip min-width="160" />
-      <el-table-column prop="createdAt" label="Created At" width="180" />
+      <el-table-column prop="remark" :label="t('list.columns.remark')" show-overflow-tooltip min-width="160" />
+      <el-table-column prop="createdAt" :label="t('list.columns.createdAt')" width="180" />
 
       <template #empty>
-        <el-empty description="No payments found" />
+        <el-empty :description="t('list.empty')" />
       </template>
     </el-table>
 
@@ -84,10 +84,12 @@
 <script setup>
 import { onMounted, reactive, ref } from 'vue';
 import { useRouter } from 'vue-router';
+import { useI18n } from 'vue-i18n';
 import { Search, RefreshLeft, CirclePlus } from '@element-plus/icons-vue';
 import { listPayments } from '../api/payment';
 
 const router = useRouter();
+const { t } = useI18n();
 
 // 状态下拉选项：与后端 PaymentStatus 枚举保持一致
 const statusOptions = ['CREATED', 'VALIDATED', 'SENT', 'COMPLETED', 'FAILED'];

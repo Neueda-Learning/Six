@@ -4,7 +4,7 @@
     <!-- 页头：带返回按钮，点击返回列表页 -->
     <el-page-header class="page-header" @back="router.push('/')">
       <template #content>
-        <span class="page-title">Payment Detail</span>
+        <span class="page-title">{{ t('detail.title') }}</span>
       </template>
     </el-page-header>
 
@@ -13,21 +13,21 @@
       <el-card class="info-card" shadow="never">
         <template #header>
           <div class="card-header">
-            <span class="card-title">Basic Information</span>
+            <span class="card-title">{{ t('detail.basicInfo') }}</span>
             <el-tag :type="statusTagType(payment.status)" effect="dark">{{ payment.status }}</el-tag>
           </div>
         </template>
 
         <el-descriptions :column="2" border>
-          <el-descriptions-item label="Payment ID">{{ payment.id }}</el-descriptions-item>
-          <el-descriptions-item label="Idempotency Key">{{ payment.idempotencyKey }}</el-descriptions-item>
-          <el-descriptions-item label="From Account">{{ payment.fromAccount }}</el-descriptions-item>
-          <el-descriptions-item label="To Account">{{ payment.toAccount }}</el-descriptions-item>
-          <el-descriptions-item label="Amount">{{ payment.amount }}</el-descriptions-item>
-          <el-descriptions-item label="Currency">{{ payment.currency }}</el-descriptions-item>
-          <el-descriptions-item label="Remark" :span="2">{{ payment.remark || '-' }}</el-descriptions-item>
-          <el-descriptions-item label="Created At">{{ payment.createdAt }}</el-descriptions-item>
-          <el-descriptions-item label="Updated At">{{ payment.updatedAt }}</el-descriptions-item>
+          <el-descriptions-item :label="t('detail.paymentId')">{{ payment.id }}</el-descriptions-item>
+          <el-descriptions-item :label="t('detail.idempotencyKey')">{{ payment.idempotencyKey }}</el-descriptions-item>
+          <el-descriptions-item :label="t('detail.fromAccount')">{{ payment.fromAccount }}</el-descriptions-item>
+          <el-descriptions-item :label="t('detail.toAccount')">{{ payment.toAccount }}</el-descriptions-item>
+          <el-descriptions-item :label="t('detail.amount')">{{ payment.amount }}</el-descriptions-item>
+          <el-descriptions-item :label="t('detail.currency')">{{ payment.currency }}</el-descriptions-item>
+          <el-descriptions-item :label="t('detail.remark')" :span="2">{{ payment.remark || '-' }}</el-descriptions-item>
+          <el-descriptions-item :label="t('detail.createdAt')">{{ payment.createdAt }}</el-descriptions-item>
+          <el-descriptions-item :label="t('detail.updatedAt')">{{ payment.updatedAt }}</el-descriptions-item>
         </el-descriptions>
 
         <!-- 失败错误详情：仅当状态为 FAILED 时展示，符合课程需求“查看失败支付错误详情” -->
@@ -35,8 +35,8 @@
           v-if="payment.status === 'FAILED'"
           type="error"
           class="error-alert"
-          :title="`Error Code: ${payment.errorCode || 'UNKNOWN'}`"
-          :description="payment.errorMessage || 'No error message provided'"
+          :title="`${t('detail.errorCode')}: ${payment.errorCode || t('detail.unknown')}`"
+          :description="payment.errorMessage || t('detail.noErrorMessage')"
           show-icon
           :closable="false"
         />
@@ -45,7 +45,7 @@
       <!-- 状态变更历史时间线（audit trail） -->
       <el-card class="history-card" shadow="never">
         <template #header>
-          <span class="card-title">Status History</span>
+          <span class="card-title">{{ t('detail.statusHistory') }}</span>
         </template>
 
         <el-timeline>
@@ -57,7 +57,7 @@
             placement="top"
           >
             <div class="timeline-title">
-              <strong>{{ item.fromStatus || 'START' }} → {{ item.toStatus }}</strong>
+              <strong>{{ item.fromStatus || t('detail.start') }} → {{ item.toStatus }}</strong>
               <el-tag size="small" type="info" effect="plain" class="operator-tag">{{ item.operator }}</el-tag>
             </div>
             <div v-if="item.errorCode" class="history-error">
@@ -74,6 +74,7 @@
 <script setup>
 import { onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
+import { useI18n } from 'vue-i18n';
 import { getPaymentById, getPaymentHistory } from '../api/payment';
 
 // 路由配置中该页面使用 props: true，因此 id 直接作为组件 prop 传入，无需再手动解析 useRoute().params
@@ -85,6 +86,7 @@ const props = defineProps({
 });
 
 const router = useRouter();
+const { t } = useI18n();
 
 const payment = ref(null);
 const history = ref([]);
