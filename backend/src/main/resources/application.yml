@@ -1,0 +1,32 @@
+﻿# 该文件用于定义应用环境配置，后续需完成数据库、服务参数与环境差异化设置。
+server:
+  port: 8080
+
+spring:
+  application:
+    name: payments-backend
+  datasource:
+    # //todo replace with real local mysql connection
+    url: jdbc:mysql://localhost:3306/payments_db?useSSL=false&serverTimezone=UTC&characterEncoding=UTF-8
+    username: root
+    password: root
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+mybatis-plus:
+  mapper-locations: classpath*:mapper/*.xml
+  configuration:
+    map-underscore-to-camel-case: true
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+
+payments:
+  # //todo supported currency and retry strategy
+  supported-currencies:
+    - USD
+    - EUR
+    - GBP
+  network-max-retry: 3

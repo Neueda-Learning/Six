@@ -1,0 +1,7 @@
+﻿<!-- 该文件用于定义XML配置或SQL映射，后续需完成具体配置项与映射语句。 -->
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.payments.mapper.PaymentStatusHistoryMapper">
+    <!-- //todo add custom SQL for history timeline queries -->
+</mapper>

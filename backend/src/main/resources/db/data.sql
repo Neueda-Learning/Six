@@ -1,0 +1,3 @@
+﻿-- 该文件用于定义数据库结构或初始化数据，后续需完成建表细节与种子数据。
+-- //todo optional seed data for mock account existence check
+-- INSERT INTO ...

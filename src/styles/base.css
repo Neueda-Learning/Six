@@ -1,0 +1,22 @@
+﻿/* 该文件用于定义全局样式基础，后续需完成设计变量、布局规范与组件样式。 */
+:root {
+  /* //todo refine design tokens after implementing final UI */
+  --page-bg: #f7f8fa;
+  --text-color: #111827;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--page-bg);
+  color: var(--text-color);
+  font-family: "Segoe UI", "PingFang SC", sans-serif;
+}
+
+a {
+  color: #2563eb;
+  text-decoration: none;
+}

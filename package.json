@@ -1,0 +1,24 @@
+{
+  "_comment": "该文件用于定义前端依赖与脚本配置，后续需补充开发构建命令与版本维护策略。",
+  "name": "payments-frontend",
+  "version": "0.0.1",
+  "private": true,
+  "description": "//todo Vue frontend for payments course project",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@element-plus/icons-vue": "^2.3.2",
+    "axios": "^1.11.0",
+    "element-plus": "^2.14.3",
+    "vue": "^3.5.19",
+    "vue-router": "^4.5.1"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^6.0.1",
+    "vite": "^7.1.3"
+  }
+}

@@ -1,0 +1,40 @@
+# 该文件用于定义Git忽略规则，后续需按前后端开发实际补充需要排除的构建与本地环境文件。
+
+# system and editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# frontend artifacts
+node_modules/
+dist/
+coverage/
+.vite/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# backend artifacts
+backend/target/
+backend/.mvn/wrapper/maven-wrapper.jar
+backend/*.log
+
+# java build and test
+*.class
+*.jar
+*.war
+*.ear
+*.iml
+
+# environment and local overrides
+.env.local
+.env.*.local
+backend/src/main/resources/application-local.yml
+
+# temporary files
+*.tmp
+*.temp

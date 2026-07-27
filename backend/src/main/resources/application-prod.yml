@@ -1,0 +1,15 @@
+﻿# 该文件用于定义应用环境配置，后续需完成数据库、服务参数与环境差异化设置。
+spring:
+  config:
+    activate:
+      on-profile: prod
+  datasource:
+    # //todo production mysql config
+    url: jdbc:mysql://localhost:3306/payments_db_prod?useSSL=false&serverTimezone=UTC&characterEncoding=UTF-8
+    username: root
+    password: root
+
+logging:
+  level:
+    root: warn
+    com.example.payments: info
