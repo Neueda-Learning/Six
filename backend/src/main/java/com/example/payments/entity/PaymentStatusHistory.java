@@ -2,12 +2,14 @@
 package com.example.payments.entity;
 
 import java.time.LocalDateTime;
-
 import com.baomidou.mybatisplus.annotation.TableName;
-
+import com.baomidou.mybatisplus.annotation.TableId;
+import lombok.Data;
+@Data
 @TableName("payment_status_history")
 public class PaymentStatusHistory {
-
+    
+    @TableId
     private Long id;
     private Long paymentId;
     private String fromStatus;
