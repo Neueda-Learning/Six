@@ -4,9 +4,9 @@ package com.example.payments.entity;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
-import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.Version;
+import com.baomidou.mybatisplus.annotation.TableName;
+
 import lombok.Data;
 
 /**
@@ -18,7 +18,7 @@ import lombok.Data;
 @Data
 @TableName("payments")
 public class Payment {
-
+    @TableId
     private Long id;
     private String idempotencyKey;
     private String fromAccount;
