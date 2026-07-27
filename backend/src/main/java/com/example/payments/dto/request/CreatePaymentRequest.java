@@ -1,4 +1,4 @@
-﻿// 该文件用于定义后端模块骨架，后续需完成对应业务逻辑、数据结构与接口实现。
+// 该文件用于定义后端模块骨架，后续需完成对应业务逻辑、数据结构与接口实现。
 package com.example.payments.dto.request;
 
 import java.math.BigDecimal;
@@ -8,6 +8,12 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
+/**
+ * 创建支付请求 DTO。
+ * 该对象用于接收客户端在创建支付时提交的请求体数据，包含幂等键、付款账户、收款账户、金额、
+ * 币种和备注等字段。
+ * 它位于接口层和服务层之间，主要承担参数传输与基础校验注解承载的职责。
+ */
 public class CreatePaymentRequest {
 
     @NotBlank
@@ -30,5 +36,5 @@ public class CreatePaymentRequest {
 
     private String remark;
 
-    //todo generate getters/setters or replace with Lombok @Data
+    // todo generate getters/setters or replace with Lombok @Data
 }
