@@ -1,21 +1,198 @@
-﻿<!-- 该文件用于定义页面组件骨架，后续需完成模板结构、交互逻辑与接口联调。 -->
+﻿<!-- 支付列表页面：支持按状态筛选、关键字搜索、分页展示，并点击行跳转详情页 -->
 <template>
-  <section>
-    <h2>Payment List</h2>
-    <!-- //todo add status filter, keyword search, table and pagination -->
-    <el-empty description="//todo Payment list UI placeholder" />
-  </section>
+  <el-card class="list-page" shadow="never">
+    <template #header>
+      <div class="card-header">
+        <span class="card-title">Payment List</span>
+        <el-button type="primary" :icon="CirclePlus" @click="router.push('/payments/create')">
+          New Payment
+        </el-button>
+      </div>
+    </template>
+
+    <!-- 筛选栏：状态下拉 + 关键字输入 + 查询/重置按钮 -->
+    <el-form :inline="true" class="filter-bar">
+      <el-form-item label="Status">
+        <el-select v-model="query.status" placeholder="All statuses" clearable style="width: 180px">
+          <el-option v-for="item in statusOptions" :key="item" :label="item" :value="item" />
+        </el-select>
+      </el-form-item>
+
+      <el-form-item label="Keyword">
+        <el-input
+          v-model="query.keyword"
+          placeholder="Search by payment ID or remark"
+          clearable
+          :prefix-icon="Search"
+          style="width: 240px"
+        />
+      </el-form-item>
+
+      <el-form-item>
+        <el-button type="primary" :icon="Search" @click="handleSearch">Search</el-button>
+        <el-button :icon="RefreshLeft" @click="handleReset">Reset</el-button>
+      </el-form-item>
+    </el-form>
+
+    <!-- 支付列表表格：v-loading 绑定请求中状态，行点击跳转详情 -->
+    <el-table
+      v-loading="loading"
+      :data="tableData"
+      style="width: 100%"
+      @row-click="handleRowClick"
+      class="clickable-table"
+      stripe
+    >
+      <el-table-column type="index" label="#" width="56" />
+      <el-table-column prop="id" label="Payment ID" width="110" />
+      <el-table-column prop="fromAccount" label="From Account" min-width="130" />
+      <el-table-column prop="toAccount" label="To Account" min-width="130" />
+      <el-table-column label="Amount" width="150" align="right">
+        <template #default="{ row }">
+          <span class="amount-cell">{{ row.amount }} {{ row.currency }}</span>
+        </template>
+      </el-table-column>
+      <el-table-column label="Status" width="130" align="center">
+        <template #default="{ row }">
+          <!-- 状态标签颜色映射：COMPLETED 绿色、FAILED 红色、SENT 黄色、CREATED/VALIDATED 灰蓝 -->
+          <el-tag :type="statusTagType(row.status)" effect="light">{{ row.status }}</el-tag>
+        </template>
+      </el-table-column>
+      <el-table-column prop="remark" label="Remark" show-overflow-tooltip min-width="160" />
+      <el-table-column prop="createdAt" label="Created At" width="180" />
+
+      <template #empty>
+        <el-empty description="No payments found" />
+      </template>
+    </el-table>
+
+    <!-- 分页组件：页码/每页大小变化时重新请求列表 -->
+    <el-pagination
+      class="pagination"
+      v-model:current-page="query.page"
+      v-model:page-size="query.size"
+      :page-sizes="[10, 20, 50]"
+      :total="total"
+      background
+      layout="total, sizes, prev, pager, next"
+      @current-change="fetchList"
+      @size-change="handleSizeChange"
+    />
+  </el-card>
 </template>
 
 <script setup>
-//todo call listPayments and bind query form/table data
+import { onMounted, reactive, ref } from 'vue';
+import { useRouter } from 'vue-router';
+import { Search, RefreshLeft, CirclePlus } from '@element-plus/icons-vue';
+import { listPayments } from '../api/payment';
+
+const router = useRouter();
+
+// 状态下拉选项：与后端 PaymentStatus 枚举保持一致
+const statusOptions = ['CREATED', 'VALIDATED', 'SENT', 'COMPLETED', 'FAILED'];
+
+// 查询条件：page/size 与后端分页参数命名一致，status 为空表示不筛选
+const query = reactive({
+  status: '',
+  keyword: '',
+  page: 1,
+  size: 10
+});
+
+const tableData = ref([]);
+const total = ref(0);
+const loading = ref(false);
+
+/** 状态到 Element Plus 标签类型的映射，用于列表和详情页统一展示颜色 */
+function statusTagType(status) {
+  const map = {
+    COMPLETED: 'success',
+    FAILED: 'danger',
+    SENT: 'warning',
+    VALIDATED: 'info',
+    CREATED: 'info'
+  };
+  return map[status] || 'info';
+}
+
+/** 请求列表数据：将当前查询条件传给后端分页接口 */
+async function fetchList() {
+  loading.value = true;
+  try {
+    const res = await listPayments({
+      status: query.status || undefined,
+      keyword: query.keyword || undefined,
+      page: query.page,
+      size: query.size
+    });
+    // 后端分页数据结构：{ list, total, page, size }
+    tableData.value = res.data.list;
+    total.value = res.data.total;
+  } catch (error) {
+    // 错误提示已由 http.js 拦截器统一处理
+  } finally {
+    loading.value = false;
+  }
+}
+
+/** 点击“查询”按钮：重置为第一页后重新加载 */
+function handleSearch() {
+  query.page = 1;
+  fetchList();
+}
+
+/** 点击“重置”按钮：清空筛选条件并重新加载 */
+function handleReset() {
+  query.status = '';
+  query.keyword = '';
+  query.page = 1;
+  fetchList();
+}
+
+/** 每页条数变化时，回到第一页重新加载，避免出现空页 */
+function handleSizeChange() {
+  query.page = 1;
+  fetchList();
+}
+
+/** 点击表格行：跳转到对应支付的详情页 */
+function handleRowClick(row) {
+  router.push(`/payments/${row.id}`);
+}
+
+// 页面挂载时执行首次查询
+onMounted(fetchList);
 </script>
 
 <style scoped>
-section {
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
-  border-radius: 12px;
-  padding: 16px;
+.card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.card-title {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.filter-bar {
+  margin-top: 4px;
+  margin-bottom: 8px;
+}
+
+.amount-cell {
+  font-variant-numeric: tabular-nums;
+}
+
+.pagination {
+  margin-top: 16px;
+  justify-content: flex-end;
+}
+
+.clickable-table :deep(.el-table__row) {
+  cursor: pointer;
 }
 </style>
+

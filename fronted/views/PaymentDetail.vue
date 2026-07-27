@@ -1,21 +1,193 @@
-﻿<!-- 该文件用于定义页面组件骨架，后续需完成模板结构、交互逻辑与接口联调。 -->
+﻿<!-- 支付详情页面：展示单笔支付的基础信息、失败错误详情（如有）以及完整状态变更历史时间线 -->
 <template>
-  <section>
-    <h2>Payment Detail</h2>
-    <!-- //todo add payment detail card, status tag and history timeline -->
-    <el-empty description="//todo Payment detail UI placeholder" />
-  </section>
+  <div class="detail-page" v-loading="loading">
+    <!-- 页头：带返回按钮，点击返回列表页 -->
+    <el-page-header class="page-header" @back="router.push('/')">
+      <template #content>
+        <span class="page-title">Payment Detail</span>
+      </template>
+    </el-page-header>
+
+    <template v-if="payment">
+      <!-- 基础信息卡片：字段命名与后端 PaymentResponse 保持一致 -->
+      <el-card class="info-card" shadow="never">
+        <template #header>
+          <div class="card-header">
+            <span class="card-title">Basic Information</span>
+            <el-tag :type="statusTagType(payment.status)" effect="dark">{{ payment.status }}</el-tag>
+          </div>
+        </template>
+
+        <el-descriptions :column="2" border>
+          <el-descriptions-item label="Payment ID">{{ payment.id }}</el-descriptions-item>
+          <el-descriptions-item label="Idempotency Key">{{ payment.idempotencyKey }}</el-descriptions-item>
+          <el-descriptions-item label="From Account">{{ payment.fromAccount }}</el-descriptions-item>
+          <el-descriptions-item label="To Account">{{ payment.toAccount }}</el-descriptions-item>
+          <el-descriptions-item label="Amount">{{ payment.amount }}</el-descriptions-item>
+          <el-descriptions-item label="Currency">{{ payment.currency }}</el-descriptions-item>
+          <el-descriptions-item label="Remark" :span="2">{{ payment.remark || '-' }}</el-descriptions-item>
+          <el-descriptions-item label="Created At">{{ payment.createdAt }}</el-descriptions-item>
+          <el-descriptions-item label="Updated At">{{ payment.updatedAt }}</el-descriptions-item>
+        </el-descriptions>
+
+        <!-- 失败错误详情：仅当状态为 FAILED 时展示，符合课程需求“查看失败支付错误详情” -->
+        <el-alert
+          v-if="payment.status === 'FAILED'"
+          type="error"
+          class="error-alert"
+          :title="`Error Code: ${payment.errorCode || 'UNKNOWN'}`"
+          :description="payment.errorMessage || 'No error message provided'"
+          show-icon
+          :closable="false"
+        />
+      </el-card>
+
+      <!-- 状态变更历史时间线（audit trail） -->
+      <el-card class="history-card" shadow="never">
+        <template #header>
+          <span class="card-title">Status History</span>
+        </template>
+
+        <el-timeline>
+          <el-timeline-item
+            v-for="item in history"
+            :key="item.id"
+            :type="statusTimelineType(item.toStatus)"
+            :timestamp="item.createdAt"
+            placement="top"
+          >
+            <div class="timeline-title">
+              <strong>{{ item.fromStatus || 'START' }} → {{ item.toStatus }}</strong>
+              <el-tag size="small" type="info" effect="plain" class="operator-tag">{{ item.operator }}</el-tag>
+            </div>
+            <div v-if="item.errorCode" class="history-error">
+              {{ item.errorCode }}: {{ item.errorMessage }}
+            </div>
+            <div v-if="item.remark" class="history-remark">{{ item.remark }}</div>
+          </el-timeline-item>
+        </el-timeline>
+      </el-card>
+    </template>
+  </div>
 </template>
 
 <script setup>
-//todo read route param id and call detail/history apis
+import { onMounted, ref } from 'vue';
+import { useRouter } from 'vue-router';
+import { getPaymentById, getPaymentHistory } from '../api/payment';
+
+// 路由配置中该页面使用 props: true，因此 id 直接作为组件 prop 传入，无需再手动解析 useRoute().params
+const props = defineProps({
+  id: {
+    type: [String, Number],
+    required: true
+  }
+});
+
+const router = useRouter();
+
+const payment = ref(null);
+const history = ref([]);
+const loading = ref(false);
+
+/** 状态到标签类型的映射：与列表页保持一致，避免同一状态在不同页面呈现不同颜色 */
+function statusTagType(status) {
+  const map = {
+    COMPLETED: 'success',
+    FAILED: 'danger',
+    SENT: 'warning',
+    VALIDATED: 'info',
+    CREATED: 'info'
+  };
+  return map[status] || 'info';
+}
+
+/** 时间线节点颜色：复用与状态标签一致的语义色，FAILED 用 danger，COMPLETED 用 success */
+function statusTimelineType(status) {
+  const map = {
+    COMPLETED: 'success',
+    FAILED: 'danger',
+    SENT: 'warning'
+  };
+  return map[status] || 'primary';
+}
+
+/** 并发加载支付详情与状态历史，减少等待时间 */
+async function fetchDetail() {
+  loading.value = true;
+  try {
+    const [detailRes, historyRes] = await Promise.all([
+      getPaymentById(props.id),
+      getPaymentHistory(props.id)
+    ]);
+    payment.value = detailRes.data;
+    history.value = historyRes.data;
+  } catch (error) {
+    // 错误提示（含 PAYMENT_NOT_FOUND 等）已由 http.js 拦截器统一处理
+  } finally {
+    loading.value = false;
+  }
+}
+
+onMounted(fetchDetail);
 </script>
 
 <style scoped>
-section {
+.detail-page {
+  max-width: 900px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.page-header {
   background: #ffffff;
-  border: 1px solid #e5e7eb;
   border-radius: 12px;
-  padding: 16px;
+  padding: 12px 20px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+}
+
+.page-title {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.card-title {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.error-alert {
+  margin-top: 16px;
+}
+
+.timeline-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.operator-tag {
+  font-weight: normal;
+}
+
+.history-error {
+  color: #dc2626;
+  font-size: 13px;
+  margin-top: 4px;
+}
+
+.history-remark {
+  color: #6b7280;
+  font-size: 13px;
+  margin-top: 2px;
 }
 </style>
+
