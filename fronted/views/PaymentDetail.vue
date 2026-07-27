@@ -1,60 +1,74 @@
 ﻿<!-- 支付详情页面：展示单笔支付的基础信息、失败错误详情（如有）以及完整状态变更历史时间线 -->
 <template>
-  <section class="detail-page" v-loading="loading">
-    <div class="header-row">
-      <h2>Payment Detail</h2>
-      <el-button @click="router.push('/')">Back to List</el-button>
-    </div>
+  <div class="detail-page" v-loading="loading">
+    <!-- 页头：带返回按钮，点击返回列表页 -->
+    <el-page-header class="page-header" @back="router.push('/')">
+      <template #content>
+        <span class="page-title">Payment Detail</span>
+      </template>
+    </el-page-header>
 
     <template v-if="payment">
       <!-- 基础信息卡片：字段命名与后端 PaymentResponse 保持一致 -->
-      <el-descriptions :column="2" border class="info-card">
-        <el-descriptions-item label="Payment ID">{{ payment.id }}</el-descriptions-item>
-        <el-descriptions-item label="Status">
-          <el-tag :type="statusTagType(payment.status)">{{ payment.status }}</el-tag>
-        </el-descriptions-item>
-        <el-descriptions-item label="From Account">{{ payment.fromAccount }}</el-descriptions-item>
-        <el-descriptions-item label="To Account">{{ payment.toAccount }}</el-descriptions-item>
-        <el-descriptions-item label="Amount">{{ payment.amount }}</el-descriptions-item>
-        <el-descriptions-item label="Currency">{{ payment.currency }}</el-descriptions-item>
-        <el-descriptions-item label="Idempotency Key">{{ payment.idempotencyKey }}</el-descriptions-item>
-        <el-descriptions-item label="Remark">{{ payment.remark || '-' }}</el-descriptions-item>
-        <el-descriptions-item label="Created At">{{ payment.createdAt }}</el-descriptions-item>
-        <el-descriptions-item label="Updated At">{{ payment.updatedAt }}</el-descriptions-item>
-      </el-descriptions>
+      <el-card class="info-card" shadow="never">
+        <template #header>
+          <div class="card-header">
+            <span class="card-title">Basic Information</span>
+            <el-tag :type="statusTagType(payment.status)" effect="dark">{{ payment.status }}</el-tag>
+          </div>
+        </template>
 
-      <!-- 失败错误详情：仅当状态为 FAILED 时展示，符合课程需求“查看失败支付错误详情” -->
-      <el-alert
-        v-if="payment.status === 'FAILED'"
-        type="error"
-        class="error-alert"
-        :title="`Error Code: ${payment.errorCode || 'UNKNOWN'}`"
-        :description="payment.errorMessage || 'No error message provided'"
-        show-icon
-        :closable="false"
-      />
+        <el-descriptions :column="2" border>
+          <el-descriptions-item label="Payment ID">{{ payment.id }}</el-descriptions-item>
+          <el-descriptions-item label="Idempotency Key">{{ payment.idempotencyKey }}</el-descriptions-item>
+          <el-descriptions-item label="From Account">{{ payment.fromAccount }}</el-descriptions-item>
+          <el-descriptions-item label="To Account">{{ payment.toAccount }}</el-descriptions-item>
+          <el-descriptions-item label="Amount">{{ payment.amount }}</el-descriptions-item>
+          <el-descriptions-item label="Currency">{{ payment.currency }}</el-descriptions-item>
+          <el-descriptions-item label="Remark" :span="2">{{ payment.remark || '-' }}</el-descriptions-item>
+          <el-descriptions-item label="Created At">{{ payment.createdAt }}</el-descriptions-item>
+          <el-descriptions-item label="Updated At">{{ payment.updatedAt }}</el-descriptions-item>
+        </el-descriptions>
+
+        <!-- 失败错误详情：仅当状态为 FAILED 时展示，符合课程需求“查看失败支付错误详情” -->
+        <el-alert
+          v-if="payment.status === 'FAILED'"
+          type="error"
+          class="error-alert"
+          :title="`Error Code: ${payment.errorCode || 'UNKNOWN'}`"
+          :description="payment.errorMessage || 'No error message provided'"
+          show-icon
+          :closable="false"
+        />
+      </el-card>
 
       <!-- 状态变更历史时间线（audit trail） -->
-      <h3 class="history-title">Status History</h3>
-      <el-timeline>
-        <el-timeline-item
-          v-for="item in history"
-          :key="item.id"
-          :type="statusTimelineType(item.toStatus)"
-          :timestamp="item.createdAt"
-        >
-          <div>
-            <strong>{{ item.fromStatus || 'START' }} → {{ item.toStatus }}</strong>
-            <span class="operator-tag">by {{ item.operator }}</span>
-          </div>
-          <div v-if="item.errorCode" class="history-error">
-            {{ item.errorCode }}: {{ item.errorMessage }}
-          </div>
-          <div v-if="item.remark" class="history-remark">{{ item.remark }}</div>
-        </el-timeline-item>
-      </el-timeline>
+      <el-card class="history-card" shadow="never">
+        <template #header>
+          <span class="card-title">Status History</span>
+        </template>
+
+        <el-timeline>
+          <el-timeline-item
+            v-for="item in history"
+            :key="item.id"
+            :type="statusTimelineType(item.toStatus)"
+            :timestamp="item.createdAt"
+            placement="top"
+          >
+            <div class="timeline-title">
+              <strong>{{ item.fromStatus || 'START' }} → {{ item.toStatus }}</strong>
+              <el-tag size="small" type="info" effect="plain" class="operator-tag">{{ item.operator }}</el-tag>
+            </div>
+            <div v-if="item.errorCode" class="history-error">
+              {{ item.errorCode }}: {{ item.errorMessage }}
+            </div>
+            <div v-if="item.remark" class="history-remark">{{ item.remark }}</div>
+          </el-timeline-item>
+        </el-timeline>
+      </el-card>
     </template>
-  </section>
+  </div>
 </template>
 
 <script setup>
@@ -120,44 +134,60 @@ onMounted(fetchDetail);
 
 <style scoped>
 .detail-page {
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
-  border-radius: 12px;
-  padding: 24px;
-}
-
-.header-row {
+  max-width: 900px;
+  margin: 0 auto;
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  flex-direction: column;
+  gap: 16px;
 }
 
-.info-card {
-  margin-top: 16px;
+.page-header {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 12px 20px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+}
+
+.page-title {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.card-title {
+  font-size: 16px;
+  font-weight: 600;
 }
 
 .error-alert {
   margin-top: 16px;
 }
 
-.history-title {
-  margin-top: 24px;
+.timeline-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .operator-tag {
-  margin-left: 8px;
-  color: #6b7280;
-  font-size: 12px;
+  font-weight: normal;
 }
 
 .history-error {
   color: #dc2626;
   font-size: 13px;
+  margin-top: 4px;
 }
 
 .history-remark {
   color: #6b7280;
   font-size: 13px;
+  margin-top: 2px;
 }
 </style>
 

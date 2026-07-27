@@ -1,8 +1,8 @@
-﻿/* 该文件用于定义全局样式基础，后续需完成设计变量、布局规范与组件样式。 */
+﻿/* 该文件用于定义全局设计变量与基础样式，供各页面组件复用，保持视觉风格统一 */
 :root {
-  /* //todo refine design tokens after implementing final UI */
-  --page-bg: #f7f8fa;
-  --text-color: #111827;
+  --page-bg: #f5f7fa;
+  --text-color: #1f2329;
+  --card-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
 }
 
 * {
@@ -19,4 +19,11 @@ body {
 a {
   color: #2563eb;
   text-decoration: none;
+}
+
+/* 统一 Element Plus 卡片的圆角与阴影，避免每个页面重复定义 */
+.el-card {
+  border-radius: 12px;
+  box-shadow: var(--card-shadow) !important;
+  border: none;
 }

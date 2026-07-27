@@ -1,7 +1,14 @@
 ﻿<!-- 支付列表页面：支持按状态筛选、关键字搜索、分页展示，并点击行跳转详情页 -->
 <template>
-  <section class="list-page">
-    <h2>Payment List</h2>
+  <el-card class="list-page" shadow="never">
+    <template #header>
+      <div class="card-header">
+        <span class="card-title">Payment List</span>
+        <el-button type="primary" :icon="CirclePlus" @click="router.push('/payments/create')">
+          New Payment
+        </el-button>
+      </div>
+    </template>
 
     <!-- 筛选栏：状态下拉 + 关键字输入 + 查询/重置按钮 -->
     <el-form :inline="true" class="filter-bar">
@@ -16,13 +23,14 @@
           v-model="query.keyword"
           placeholder="Search by payment ID or remark"
           clearable
-          style="width: 220px"
+          :prefix-icon="Search"
+          style="width: 240px"
         />
       </el-form-item>
 
       <el-form-item>
-        <el-button type="primary" @click="handleSearch">Search</el-button>
-        <el-button @click="handleReset">Reset</el-button>
+        <el-button type="primary" :icon="Search" @click="handleSearch">Search</el-button>
+        <el-button :icon="RefreshLeft" @click="handleReset">Reset</el-button>
       </el-form-item>
     </el-form>
 
@@ -33,20 +41,29 @@
       style="width: 100%"
       @row-click="handleRowClick"
       class="clickable-table"
+      stripe
     >
+      <el-table-column type="index" label="#" width="56" />
       <el-table-column prop="id" label="Payment ID" width="110" />
-      <el-table-column prop="fromAccount" label="From Account" width="140" />
-      <el-table-column prop="toAccount" label="To Account" width="140" />
-      <el-table-column prop="amount" label="Amount" width="120" />
-      <el-table-column prop="currency" label="Currency" width="100" />
-      <el-table-column label="Status" width="130">
+      <el-table-column prop="fromAccount" label="From Account" min-width="130" />
+      <el-table-column prop="toAccount" label="To Account" min-width="130" />
+      <el-table-column label="Amount" width="150" align="right">
         <template #default="{ row }">
-          <!-- 状态标签颜色映射：COMPLETED 绿色、FAILED 红色、SENT 黄色、CREATED/VALIDATED 灰蓝 -->
-          <el-tag :type="statusTagType(row.status)">{{ row.status }}</el-tag>
+          <span class="amount-cell">{{ row.amount }} {{ row.currency }}</span>
         </template>
       </el-table-column>
-      <el-table-column prop="remark" label="Remark" show-overflow-tooltip />
+      <el-table-column label="Status" width="130" align="center">
+        <template #default="{ row }">
+          <!-- 状态标签颜色映射：COMPLETED 绿色、FAILED 红色、SENT 黄色、CREATED/VALIDATED 灰蓝 -->
+          <el-tag :type="statusTagType(row.status)" effect="light">{{ row.status }}</el-tag>
+        </template>
+      </el-table-column>
+      <el-table-column prop="remark" label="Remark" show-overflow-tooltip min-width="160" />
       <el-table-column prop="createdAt" label="Created At" width="180" />
+
+      <template #empty>
+        <el-empty description="No payments found" />
+      </template>
     </el-table>
 
     <!-- 分页组件：页码/每页大小变化时重新请求列表 -->
@@ -56,16 +73,18 @@
       v-model:page-size="query.size"
       :page-sizes="[10, 20, 50]"
       :total="total"
+      background
       layout="total, sizes, prev, pager, next"
       @current-change="fetchList"
       @size-change="handleSizeChange"
     />
-  </section>
+  </el-card>
 </template>
 
 <script setup>
 import { onMounted, reactive, ref } from 'vue';
 import { useRouter } from 'vue-router';
+import { Search, RefreshLeft, CirclePlus } from '@element-plus/icons-vue';
 import { listPayments } from '../api/payment';
 
 const router = useRouter();
@@ -147,15 +166,24 @@ onMounted(fetchList);
 </script>
 
 <style scoped>
-.list-page {
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
-  border-radius: 12px;
-  padding: 24px;
+.card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.card-title {
+  font-size: 16px;
+  font-weight: 600;
 }
 
 .filter-bar {
-  margin-top: 16px;
+  margin-top: 4px;
+  margin-bottom: 8px;
+}
+
+.amount-cell {
+  font-variant-numeric: tabular-nums;
 }
 
 .pagination {
