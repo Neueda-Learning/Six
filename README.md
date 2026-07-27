@@ -1,4 +1,7 @@
 <!-- 该文件用于说明项目整体结构与开发规范，后续需持续维护目录说明、启动方式与协作约定。 -->
+
+# 先安装element plus依赖
+npm install element-plus @element-plus/icons-vue
 # Payments Processing System
 
 ## 项目目录结构
