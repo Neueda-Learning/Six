@@ -37,7 +37,7 @@ Six/
 │     │     ├─ mapper/                   # Mapper XML 映射
 │     │     └─ db/                       # 数据库 DDL 与初始化脚本
 │     └─ test/                           # 后端测试代码
-├─ src/                                  # Vue 前端源码
+├─ fronted/                                  # Vue 前端源码
 │  ├─ api/                               # Axios 封装与支付接口定义
 │  ├─ router/                            # 前端路由配置
 │  ├─ styles/                            # 全局样式与设计变量
@@ -61,10 +61,10 @@ Six/
 - `backend/src/main/java/.../service`: 承载核心业务流程（幂等、校验、状态推进、历史记录）。
 - `backend/src/main/java/.../mapper` 与 `backend/src/main/resources/mapper`: 数据访问接口与 SQL 映射。
 - `backend/src/main/resources/db`: 建表脚本与初始化数据脚本。
-- `src/views`: 前端页面层，覆盖创建支付、支付列表、支付详情与历史展示。
-- `src/api`: 统一前端 API 调用入口，封装支付相关接口。
-- `src/router`: 页面路由管理，定义页面跳转关系。
-- `src/styles`: 全局样式基础与后续设计主题变量。
+- `fronted/views`: 前端页面层，覆盖创建支付、支付列表、支付详情与历史展示。
+- `fronted/api`: 统一前端 API 调用入口，封装支付相关接口。
+- `fronted/router`: 页面路由管理，定义页面跳转关系。
+- `fronted/styles`: 全局样式基础与后续设计主题变量。
 
 ## 当前状态
 
