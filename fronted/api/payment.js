@@ -1,27 +1,45 @@
-﻿// 该文件用于定义前端模块骨架，后续需完成页面逻辑、接口调用与状态处理。
+﻿// 该文件用于统一封装支付模块相关的后端接口调用，页面组件只需引入本文件的方法，不直接操作 Axios。
 import http from './http';
 
+/**
+ * 创建支付（幂等接口）。
+ * 若请求体中的 idempotencyKey 与已存在的支付相同，后端会直接返回已存在的支付记录（HTTP 200）。
+ * @param {Object} payload 创建支付请求体：idempotencyKey/fromAccount/toAccount/amount/currency/remark
+ */
 export function createPayment(payload) {
-  //todo POST /api/payments
   return http.post('/payments', payload);
 }
 
+/**
+ * 按支付主键 ID 查询支付详情。
+ * @param {number|string} id 支付主键 ID
+ */
 export function getPaymentById(id) {
-  //todo GET /api/payments/{id}
   return http.get(`/payments/${id}`);
 }
 
+/**
+ * 查询指定支付的状态变更历史（审计时间线）。
+ * @param {number|string} id 支付主键 ID
+ */
 export function getPaymentHistory(id) {
-  //todo GET /api/payments/{id}/history
   return http.get(`/payments/${id}/history`);
 }
 
+/**
+ * 分页查询支付列表，支持按状态与关键字筛选。
+ * @param {Object} params 查询参数：status/keyword/page/size
+ */
 export function listPayments(params) {
-  //todo GET /api/payments
   return http.get('/payments', { params });
 }
 
+/**
+ * 手工推进/修改支付状态（用于课程演示与测试，不代表真实生产流程）。
+ * @param {number|string} id 支付主键 ID
+ * @param {Object} payload 请求体：targetStatus/errorCode/errorMessage/remark
+ */
 export function updatePaymentStatus(id, payload) {
-  //todo PATCH /api/payments/{id}/status
   return http.patch(`/payments/${id}/status`, payload);
 }
+

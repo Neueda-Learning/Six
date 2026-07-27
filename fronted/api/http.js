@@ -1,6 +1,8 @@
-﻿// 该文件用于定义前端模块骨架，后续需完成页面逻辑、接口调用与状态处理。
+﻿// 该文件用于封装 Axios 实例，统一处理后端响应信封与全局错误提示。
 import axios from 'axios';
+import { ElMessage } from 'element-plus';
 
+// 创建 Axios 实例：baseURL 优先读取环境变量，未配置时默认走 /api（配合 Vite 代理转发到后端）
 const http = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || '/api',
   timeout: 10000
@@ -8,11 +10,22 @@ const http = axios.create({
 
 http.interceptors.response.use(
   (response) => {
-    //todo normalize backend response envelope here
-    return response;
+    // 后端统一响应信封结构为 { success, data, errorCode, message }
+    const body = response.data;
+
+    // 业务失败（success === false）：统一弹出错误提示，并以 reject 方式抛出，方便页面 catch 后做后续处理
+    if (body && body.success === false) {
+      ElMessage.error(body.message || '请求处理失败');
+      return Promise.reject(body);
+    }
+
+    // 业务成功：直接把信封整体返回给调用方，页面通过 res.data 取出真正的业务数据
+    return body;
   },
   (error) => {
-    //todo handle global api error feedback
+    // 网络异常或非 2xx 状态码：尝试从后端错误响应体中取出 message，否则退回到 Axios 默认错误信息
+    const backendMessage = error.response && error.response.data && error.response.data.message;
+    ElMessage.error(backendMessage || error.message || '网络请求异常');
     return Promise.reject(error);
   }
 );
