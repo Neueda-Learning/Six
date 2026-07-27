@@ -1,12 +1,13 @@
 <!-- 该文件用于说明项目整体结构与开发规范，后续需持续维护目录说明、启动方式与协作约定。 -->
 
-# 阅读.github下的记忆配置文件与SKILL文件，可以根据自己的习惯更改设置
-
-# 阅读文件payment-processing-design.md
-
-# 安装element plus依赖
-npm install element-plus @element-plus/icons-vue
 # Payments Processing System
+
+## 阅读.github下的记忆配置文件与SKILL文件，可以根据自己的习惯更改设置
+
+## 阅读文件payment-processing-design.md
+
+## 安装element plus依赖
+npm install element-plus @element-plus/icons-vue
 
 ## 项目目录结构
 
