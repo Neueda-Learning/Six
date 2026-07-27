@@ -51,13 +51,8 @@
 | `PROCESSING_ERROR` | 500 Internal Error | 后端运行时非预期异常 |
 | `NETWORK_ERROR` | 503 Service Unavailable | 模拟通道通信超时且重试次数耗尽 |
 
-## 5. 数据与事务约定
-- 核心表：payments, payment_status_history。
-- 所有状态变化必须写入 payment_status_history。
-- 创建支付与状态推进建议使用单事务，保证主表与历史表一致性。
-- 并发更新使用乐观锁 version 字段。
 
-## 6. 代码编写规范
+## 5. 代码编写规范
 
 ### 后端 Spring Boot 编码守则
 * **分层边界**:
@@ -67,24 +62,24 @@
 * **异常处理**: 使用 `@RestControllerAdvice` 结合全局自定义异常类，拦截特定异常并统一返回包含 `errorCode`、`message`、`timestamp` 的标准 JSON 数据体。
 * **命名**: 使用标准的 JavaBean、MyBatis-Plus 命名规范。
 
-## 7. 代码生成与修改偏好
+## 6. 代码生成与修改偏好
 - 优先小步改动，保持目录清晰：controller/service/mapper/entity/dto/enums/exception。
 - 先保证可运行 MVP，再逐步补充校验、错误码与历史时间线。
 - 提供 REST 接口时必须同步给出请求示例与响应示例。
 - 涉及接口变更时，同步更新 OpenAPI 注解与文档。
 
-## 8. 沟通方式
+## 7. 沟通方式
 - 默认中文回复；代码、命令、变量名、文件路径保持英文
 - 结论先行，简洁直接，不先铺垫背景
 - 不谄媚，不夸"这是个很好的问题"，不以"当然可以"开头
 - 给真实判断——方案有问题直接指出，发现更好做法主动说明
 
-## 9. Git 操作规则
+## 8. Git 操作规则
 - 不自动 `git commit` 或 `git push`，除非我明确要求
 - 提交前先展示将要提交的变更摘要
 - commit message 使用简洁英文
 
-## 10. 红线操作
+## 9. 红线操作
 以下操作即使在 auto-accept 模式下也必须先询问：
 - 删除文件、目录或 git 历史
 - 修改 `.env`、密钥、token、证书、CI/CD 配置

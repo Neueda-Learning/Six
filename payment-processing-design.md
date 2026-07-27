@@ -61,7 +61,7 @@ flowchart TB
 | 层级 | 技术 | 说明 |
 |---|---|---|
 | 前端 | Vue 3 + Element Plus + Vite + Axios | 页面构建、组件化、接口调用 |
-| 后端 | Spring Boot 3.x + JDK 17 + Maven | REST API 与业务实现 |
+| 后端 | Spring Boot 3.x + JDK 22 + Maven | REST API 与业务实现 |
 | 持久层 | MyBatis-Plus | ORM/CRUD 与乐观锁支持 |
 | 数据库 | MySQL 8.x | 支付数据与状态历史存储 |
 | API 文档 | springdoc-openapi + Swagger UI（可选 Knife4j） | 接口可视化与调试 |
