@@ -4,7 +4,7 @@
     <template #header>
       <div class="card-header">
         <el-icon :size="18"><CirclePlus /></el-icon>
-        <span class="card-title">Create Payment</span>
+        <span class="card-title">{{ t('create.title') }}</span>
       </div>
     </template>
 
@@ -20,14 +20,14 @@
       <el-row :gutter="24">
         <el-col :span="12">
           <!-- 源账户：必须与目标账户不同，且需在系统种子数据中真实存在（后端校验） -->
-          <el-form-item label="From Account" prop="fromAccount">
-            <el-input v-model="form.fromAccount" placeholder="e.g. ACC10001" :prefix-icon="User" />
+          <el-form-item :label="t('create.fromAccount')" prop="fromAccount">
+            <el-input v-model="form.fromAccount" :placeholder="t('create.fromAccountPlaceholder')" :prefix-icon="User" />
           </el-form-item>
         </el-col>
         <el-col :span="12">
           <!-- 目标账户 -->
-          <el-form-item label="To Account" prop="toAccount">
-            <el-input v-model="form.toAccount" placeholder="e.g. ACC20002" :prefix-icon="User" />
+          <el-form-item :label="t('create.toAccount')" prop="toAccount">
+            <el-input v-model="form.toAccount" :placeholder="t('create.toAccountPlaceholder')" :prefix-icon="User" />
           </el-form-item>
         </el-col>
       </el-row>
@@ -35,7 +35,7 @@
       <el-row :gutter="24">
         <el-col :span="12">
           <!-- 金额：数字输入框，限制最小值、最大值与两位小数精度 -->
-          <el-form-item label="Amount" prop="amount">
+          <el-form-item :label="t('create.amount')" prop="amount">
             <el-input-number
               v-model="form.amount"
               :min="0.01"
@@ -49,8 +49,8 @@
         </el-col>
         <el-col :span="12">
           <!-- 货币：下拉选择，仅提供后端白名单支持的三种货币 -->
-          <el-form-item label="Currency" prop="currency">
-            <el-select v-model="form.currency" placeholder="Select currency" style="width: 100%">
+          <el-form-item :label="t('create.currency')" prop="currency">
+            <el-select v-model="form.currency" :placeholder="t('create.currencyPlaceholder')" style="width: 100%">
               <el-option v-for="item in currencyOptions" :key="item" :label="item" :value="item" />
             </el-select>
           </el-form-item>
@@ -58,20 +58,20 @@
       </el-row>
 
       <!-- 备注：可选字段 -->
-      <el-form-item label="Remark" prop="remark">
+      <el-form-item :label="t('create.remark')" prop="remark">
         <el-input
           v-model="form.remark"
           type="textarea"
           :rows="2"
-          placeholder="Optional note, e.g. invoice-2026-07"
+          :placeholder="t('create.remarkPlaceholder')"
         />
       </el-form-item>
 
       <!-- 幂等键：页面加载时自动生成 UUID，用户可手动修改，用于验证重复提交场景 -->
-      <el-form-item label="Idempotency Key" prop="idempotencyKey">
+      <el-form-item :label="t('create.idempotencyKey')" prop="idempotencyKey">
         <el-input v-model="form.idempotencyKey">
           <template #append>
-            <el-button :icon="RefreshRight" @click="regenerateIdempotencyKey">Regenerate</el-button>
+            <el-button :icon="RefreshRight" @click="regenerateIdempotencyKey">{{ t('create.regenerate') }}</el-button>
           </template>
         </el-input>
       </el-form-item>
@@ -80,22 +80,24 @@
 
       <el-form-item>
         <el-button type="primary" :icon="Check" :loading="submitting" @click="handleSubmit">
-          Submit Payment
+          {{ t('create.submit') }}
         </el-button>
-        <el-button :icon="RefreshLeft" @click="handleReset">Reset</el-button>
+        <el-button :icon="RefreshLeft" @click="handleReset">{{ t('create.reset') }}</el-button>
       </el-form-item>
     </el-form>
   </el-card>
 </template>
 
 <script setup>
-import { reactive, ref } from 'vue';
+import { computed, reactive, ref } from 'vue';
 import { useRouter } from 'vue-router';
+import { useI18n } from 'vue-i18n';
 import { ElMessage } from 'element-plus';
 import { CirclePlus, User, RefreshRight, RefreshLeft, Check } from '@element-plus/icons-vue';
 import { createPayment } from '../api/payment';
 
 const router = useRouter();
+const { t } = useI18n();
 
 // 表单引用，用于触发 Element Plus 内置的字段校验
 const formRef = ref(null);
@@ -137,26 +139,27 @@ function regenerateIdempotencyKey() {
  */
 function validateToAccount(rule, value, callback) {
   if (value && form.fromAccount && value === form.fromAccount) {
-    callback(new Error('To Account must be different from From Account'));
+    callback(new Error(t('create.validation.toDifferent')));
   } else {
     callback();
   }
 }
 
 // 表单校验规则：必填项 + 金额范围 + 账户不同校验
-const rules = {
-  fromAccount: [{ required: true, message: 'From Account is required', trigger: 'blur' }],
+// 使用 computed 包裹，确保切换语言后校验提示文案能实时更新
+const rules = computed(() => ({
+  fromAccount: [{ required: true, message: t('create.validation.fromRequired'), trigger: 'blur' }],
   toAccount: [
-    { required: true, message: 'To Account is required', trigger: 'blur' },
+    { required: true, message: t('create.validation.toRequired'), trigger: 'blur' },
     { validator: validateToAccount, trigger: 'blur' }
   ],
   amount: [
-    { required: true, message: 'Amount is required', trigger: 'blur' },
-    { type: 'number', min: 0.01, max: 1000000, message: 'Amount must be between 0.01 and 1,000,000', trigger: 'blur' }
+    { required: true, message: t('create.validation.amountRequired'), trigger: 'blur' },
+    { type: 'number', min: 0.01, max: 1000000, message: t('create.validation.amountRange'), trigger: 'blur' }
   ],
-  currency: [{ required: true, message: 'Currency is required', trigger: 'change' }],
-  idempotencyKey: [{ required: true, message: 'Idempotency Key is required', trigger: 'blur' }]
-};
+  currency: [{ required: true, message: t('create.validation.currencyRequired'), trigger: 'change' }],
+  idempotencyKey: [{ required: true, message: t('create.validation.idempotencyRequired'), trigger: 'blur' }]
+}));
 
 /** 提交表单：先做前端校验，通过后调用创建支付接口 */
 async function handleSubmit() {
@@ -169,7 +172,7 @@ async function handleSubmit() {
   try {
     const res = await createPayment({ ...form });
     // 后端幂等命中或新建成功都会返回 success = true，data 中携带支付详情（含 id）
-    ElMessage.success(res.message || 'Payment submitted successfully');
+    ElMessage.success(res.message || t('create.submitSuccess'));
     router.push(`/payments/${res.data.id}`);
   } catch (error) {
     // 具体错误提示已由 http.js 拦截器统一弹出，这里无需重复处理
