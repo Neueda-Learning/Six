@@ -7,6 +7,7 @@ import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+import lombok.Data;
 
 /**
  * 创建支付请求 DTO。
@@ -14,6 +15,7 @@ import jakarta.validation.constraints.Size;
  * 币种和备注等字段。
  * 它位于接口层和服务层之间，主要承担参数传输与基础校验注解承载的职责。
  */
+@Data
 public class CreatePaymentRequest {
 
     @NotBlank
@@ -35,6 +37,4 @@ public class CreatePaymentRequest {
     private String currency;
 
     private String remark;
-
-    // todo generate getters/setters or replace with Lombok @Data
 }

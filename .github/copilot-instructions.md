@@ -2,15 +2,10 @@
 
 ## 1. 项目定位
 - 这是课程实践项目，目标是实现支付生命周期管理，不做大型企业级扩展。
-- 技术栈固定：Spring Boot 3.x + JDK 22 + Maven，前端 Vue 3 + Element Plus，数据库 MySQL，持久层 MyBatis-Plus。
+- 技术栈固定：Spring Boot 3.x + JDK 17 + Maven，前端 Vue 3 + Element Plus，数据库 MySQL，持久层 MyBatis-Plus。
 
 ## 2. 功能范围边界
-- 实现以下 5 项功能：
-1. 创建支付。
-2. 查看支付状态与详情。
-3. 查看支付状态历史（audit trail）。
-4. 按状态筛选与检索支付。
-5. 查看失败支付错误详情。
+
 - 不实现登录认证、权限、账户归属、多租户、真实支付网关对接。
 
 
