@@ -3,6 +3,7 @@ package com.example.payments;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
 /**
  * 后端应用启动入口。
@@ -10,6 +11,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
  * 对本项目来说，它是支付处理系统后端服务的统一入口，通常不承载具体业务逻辑。
  */
 @SpringBootApplication
+@EnableScheduling
 public class PaymentsApplication {
 
     public static void main(String[] args) {

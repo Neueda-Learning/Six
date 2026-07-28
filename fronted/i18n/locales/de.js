@@ -89,6 +89,8 @@ export default {
   detail: {
     title: 'Zahlungsdetails',
     basicInfo: 'Grundinformationen',
+    refreshStatus: 'Status aktualisieren',
+    autoRefreshing: 'Status wird automatisch aktualisiert',
     paymentId: 'Zahlungs-ID',
     idempotencyKey: 'Idempotenzschlüssel',
     fromAccount: 'Von Konto',

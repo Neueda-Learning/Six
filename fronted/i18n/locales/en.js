@@ -89,6 +89,8 @@ export default {
   detail: {
     title: 'Payment Detail',
     basicInfo: 'Basic Information',
+    refreshStatus: 'Refresh Status',
+    autoRefreshing: 'Status is refreshing automatically',
     paymentId: 'Payment ID',
     idempotencyKey: 'Idempotency Key',
     fromAccount: 'From Account',
