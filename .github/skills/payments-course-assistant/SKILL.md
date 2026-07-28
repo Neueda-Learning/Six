@@ -44,14 +44,13 @@ description: "Use when: 需要为本仓库的支付课程项目生成或修改 S
 7. 补充 OpenAPI 注解。
 
 ## 前端实现清单（建议顺序）
-1. API 模块：payment.js（5 个核心接口）。
-2. 页面：PaymentCreate, PaymentList, PaymentDetail。
+1. API 模块：payment.js。
+2. 页面：PaymentCreate, PaymentList, PaymentDetail等。
 3. 列表筛选与分页。
 4. 详情页历史时间线与失败错误展示。
 5. 统一错误提示与状态颜色映射。
 
 ## 验收检查
-- 是否只实现 5 项课程功能，无额外范围膨胀。
 - 是否保留完整 audit trail。
 - 是否覆盖关键异常：非法流转、校验失败、支付不存在、网络模拟失败。
 - 是否能通过 Happy Path：CREATED -> VALIDATED -> SENT -> COMPLETED。
