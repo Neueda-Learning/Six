@@ -96,9 +96,9 @@ function handleLocaleChange(command) {
 }
 
 .app-header {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) auto minmax(140px, 1fr);
   align-items: center;
-  justify-content: space-between;
   gap: 40px;
   /* 渐变色导航栏，替代原本的纯白背景，让整个应用更有辨识度 */
   background: linear-gradient(135deg, #4f6df5 0%, #3d54d1 100%);
@@ -110,6 +110,7 @@ function handleLocaleChange(command) {
 .brand {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 10px;
   white-space: nowrap;
 }
@@ -127,7 +128,7 @@ function handleLocaleChange(command) {
 
 .nav-menu {
   border-bottom: none;
-  flex: 1;
+  justify-self: center;
 }
 
 .nav-menu :deep(.el-menu-item) {
@@ -147,6 +148,7 @@ function handleLocaleChange(command) {
 
 .lang-switcher {
   white-space: nowrap;
+  justify-self: end;
 }
 
 .lang-trigger {
@@ -176,5 +178,20 @@ function handleLocaleChange(command) {
   max-width: 1200px;
   margin: 0 auto;
   width: 100%;
+}
+
+@media (max-width: 960px) {
+  .app-header {
+    grid-template-columns: 1fr;
+    justify-items: center;
+    height: auto;
+    padding: 16px 20px;
+    gap: 12px;
+  }
+
+  .nav-menu,
+  .lang-switcher {
+    justify-self: center;
+  }
 }
 </style>

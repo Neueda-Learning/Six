@@ -36,5 +36,4 @@ public class PaymentResponse {
     private LocalDateTime deletedAt;
     private LocalDateTime recoverableUntil;
 
-    // todo generate getters/setters
 }
