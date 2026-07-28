@@ -61,7 +61,7 @@
       <el-table-column prop="toAccount" :label="t('list.columns.toAccount')" min-width="130" />
       <el-table-column :label="t('list.columns.amount')" width="150" align="right">
         <template #default="{ row }">
-          <span class="amount-cell">{{ row.amount }} {{ row.currency }}</span>
+          <span class="amount-cell">{{ formatAmount(row.amount, row.currency) }}</span>
         </template>
       </el-table-column>
       <el-table-column :label="t('list.columns.status')" width="130" align="center">
@@ -71,7 +71,9 @@
         </template>
       </el-table-column>
       <el-table-column prop="remark" :label="t('list.columns.remark')" show-overflow-tooltip min-width="160" />
-      <el-table-column prop="createdAt" :label="t('list.columns.createdAt')" width="180" />
+      <el-table-column :label="t('list.columns.createdAt')" width="180">
+        <template #default="{ row }">{{ formatDateTime(row.createdAt) }}</template>
+      </el-table-column>
 
       <template #empty>
         <el-empty :description="t('list.empty')" />
@@ -101,7 +103,18 @@ import { Search, RefreshLeft, CirclePlus } from '@element-plus/icons-vue';
 import { listPayments } from '../api/payment';
 
 const router = useRouter();
-const { t } = useI18n();
+const { t, n, d } = useI18n();
+
+// 按支付自己的币种格式化金额：千分位分隔符/小数点符号随当前界面语言自动切换，
+// 货币符号则个据每笔支付自己的 currency 字段决定（不受界面语言影响）。
+function formatAmount(amount, currency) {
+  return n(amount, { key: 'currency', currency });
+}
+
+// 按当前界面语言的习惯格式化日期时间（如英文 12 小时制、中/德文 24 小时制）
+function formatDateTime(value) {
+  return value ? d(new Date(value), 'short') : '-';
+}
 
 // 状态下拉选项：与后端 PaymentStatus 枚举保持一致
 const statusOptions = ['CREATED', 'VALIDATED', 'SENT', 'COMPLETED', 'FAILED'];

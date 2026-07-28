@@ -12,16 +12,49 @@ const STORAGE_KEY = 'payments-locale';
 
 /**
  * 读取上次保存的语言，用于应用启动时决定初始显示哪种语言。
- * 若 localStorage 中没有记录（首次访问）或记录的值不在支持列表内（比如旧版本存过其他语言代码），
- * 一律回退到中文，保证不会出现空白语言或报错。
+ * 优先级：localStorage 中的历史选择 > 浏览器/系统语言 > 中文兜底。
+ * - 若 localStorage 中有记录且在支持列表内，直接使用（尊重用户上次的主动选择）。
+ * - 否则读取 navigator.language（如 'de-DE'、'en-US'），取前两位语言代码（'de'/'en'）匹配支持列表，
+ *   让首次访问的用户能直接看到自己系统语言对应的界面，而不是每次都先看到中文再手动切换。
+ * - 都不匹配时回退到中文，保证不会出现空白语言或报错。
  */
 function resolveInitialLocale() {
   const saved = localStorage.getItem(STORAGE_KEY);
   if (saved && SUPPORTED_LOCALES.includes(saved)) {
     return saved;
   }
+
+  const browserLang = (navigator.language || '').slice(0, 2).toLowerCase();
+  if (SUPPORTED_LOCALES.includes(browserLang)) {
+    return browserLang;
+  }
+
   return 'zh';
 }
+
+// 数字格式化配置（供 useI18n() 的 n() 函数使用）：
+// - currency 格式用于金额展示，具体货币符号在调用处通过 { key: 'currency', currency: row.currency } 动态覆盖，
+//   这里的 currency 字段只是必填的默认值占位，实际展示以每笔支付自己的币种为准；
+//   真正随语言变化的是千分位分隔符、小数点符号的展示习惯（如英文 1,234.56 / 德文 1.234,56）。
+const numberFormats = {
+  zh: { currency: { style: 'currency', currency: 'CNY', currencyDisplay: 'symbol' } },
+  en: { currency: { style: 'currency', currency: 'USD', currencyDisplay: 'symbol' } },
+  de: { currency: { style: 'currency', currency: 'EUR', currencyDisplay: 'symbol' } }
+};
+
+// 日期时间格式化配置（供 useI18n() 的 d() 函数使用）：不同语言习惯的日期顺序、是否 12/24 小时制不同，
+// 用 'short' 这个格式名统一在各页面调用，具体展示规则按当前 locale 自动切换。
+const datetimeFormats = {
+  zh: {
+    short: { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false }
+  },
+  en: {
+    short: { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: true }
+  },
+  de: {
+    short: { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false }
+  }
+};
 
 // 创建全局唯一的 i18n 实例：
 // - legacy: false      使用 Composition API 模式，这样组件里才能用 useI18n() 拿到响应式的 t()/locale
@@ -32,7 +65,9 @@ const i18n = createI18n({
   legacy: false,
   locale: resolveInitialLocale(),
   fallbackLocale: 'en',
-  messages: { en, zh, de }
+  messages: { en, zh, de },
+  numberFormats,
+  datetimeFormats
 });
 
 /**

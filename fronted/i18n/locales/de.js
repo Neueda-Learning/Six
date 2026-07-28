@@ -79,5 +79,20 @@ export default {
   http: {
     requestFailed: 'Anfrage fehlgeschlagen',
     networkError: 'Netzwerkfehler bei der Anfrage'
+  },
+  // Wörterbuch mit lokalisierten Fehlercode-Beschreibungen, das 1:1 dem Backend-Enum ErrorCode entspricht.
+  // Wird bei der Anzeige von Fehlerdetails bevorzugt verwendet (anstatt die feste Backend-Meldung direkt anzuzeigen),
+  // damit derselbe Fehlercode in allen drei Oberflächensprachen konsistent beschrieben wird.
+  errors: {
+    VALIDATION_FAILED: 'Grundlegende Validierung der Formularfelder fehlgeschlagen',
+    INSUFFICIENT_FUNDS: 'Unzureichendes verfügbares Guthaben auf dem Quellkonto',
+    INVALID_ACCOUNT: 'Ungültiges Kontoformat oder das Konto existiert nicht',
+    INVALID_CURRENCY: 'Nicht unterstützter oder ungültiger Währungscode',
+    INVALID_AMOUNT: 'Betrag ist null, negativ oder überschreitet das Einzeltransaktionslimit',
+    DUPLICATE_PAYMENT: 'Konflikt beim Idempotenzschlüssel; die Zahlung wird bereits verarbeitet',
+    INVALID_STATUS_TRANSITION: 'Unzulässiger oder rückwärtsgerichteter Statusübergang versucht',
+    PAYMENT_NOT_FOUND: 'Die angeforderte Zahlungs-ID existiert nicht',
+    PROCESSING_ERROR: 'Unerwarteter interner Serverfehler',
+    NETWORK_ERROR: 'Simulierter Kanal-Timeout, Wiederholungsversuche ausgeschöpft'
   }
 };
