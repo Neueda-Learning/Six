@@ -81,6 +81,7 @@ import { onMounted, onUnmounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import { getPaymentById, getPaymentHistory } from '../api/payment';
+import { formatDateTime } from '../utils/datetime';
 
 const POLLING_INTERVAL_MS = 5000;
 

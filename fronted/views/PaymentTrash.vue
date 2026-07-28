@@ -40,8 +40,16 @@
         </template>
       </el-table-column>
       <el-table-column prop="remark" :label="t('trash.columns.remark')" show-overflow-tooltip min-width="180" />
-      <el-table-column prop="deletedAt" :label="t('trash.columns.deletedAt')" width="180" />
-      <el-table-column prop="recoverableUntil" :label="t('trash.columns.recoverableUntil')" width="180" />
+      <el-table-column :label="t('trash.columns.deletedAt')" width="180">
+        <template #default="{ row }">
+          {{ formatDateTime(row.deletedAt) }}
+        </template>
+      </el-table-column>
+      <el-table-column :label="t('trash.columns.recoverableUntil')" width="180">
+        <template #default="{ row }">
+          {{ formatDateTime(row.recoverableUntil) }}
+        </template>
+      </el-table-column>
       <el-table-column :label="t('trash.columns.actions')" width="200" align="center" fixed="right">
         <template #default="{ row }">
           <div class="action-group">
@@ -85,6 +93,7 @@ import { useI18n } from 'vue-i18n';
 import { ElMessage } from 'element-plus';
 import { Search, RefreshLeft } from '@element-plus/icons-vue';
 import { listDeletedPayments, permanentlyDeletePayment, restorePayment } from '../api/payment';
+import { formatDateTime } from '../utils/datetime';
 
 const { t } = useI18n();
 
