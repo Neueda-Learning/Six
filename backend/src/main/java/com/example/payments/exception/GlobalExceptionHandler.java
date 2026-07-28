@@ -7,6 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import com.example.payments.dto.response.ApiResponse;
 import com.example.payments.enums.ErrorCode;
@@ -18,6 +19,19 @@ import com.example.payments.enums.ErrorCode;
  */
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    @ExceptionHandler(NoResourceFoundException.class)
+    /**
+     * 处理静态资源或未映射路径未命中。
+     * 避免把 404 场景误包装成 500，向前端返回更准确的资源未找到语义。
+     *
+     * @param ex 资源未命中异常
+     * @return 标准化 404 响应
+     */
+    public ResponseEntity<ApiResponse<Object>> handleNoResourceFoundException(NoResourceFoundException ex) {
+        return ResponseEntity.status(404)
+                .body(ApiResponse.fail(ErrorCode.RESOURCE_NOT_FOUND.name(), "请求资源不存在"));
+    }
 
     @ExceptionHandler(PaymentException.class)
     /**
