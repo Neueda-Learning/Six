@@ -22,11 +22,11 @@
           <el-descriptions-item :label="t('detail.paymentId')">{{ payment.id }}</el-descriptions-item>
           <el-descriptions-item :label="t('detail.fromAccount')">{{ payment.fromAccount }}</el-descriptions-item>
           <el-descriptions-item :label="t('detail.toAccount')">{{ payment.toAccount }}</el-descriptions-item>
-          <el-descriptions-item :label="t('detail.amount')">{{ payment.amount }}</el-descriptions-item>
+          <el-descriptions-item :label="t('detail.amount')">{{ formatAmount(payment.amount, payment.currency) }}</el-descriptions-item>
           <el-descriptions-item :label="t('detail.currency')">{{ payment.currency }}</el-descriptions-item>
           <el-descriptions-item :label="t('detail.remark')" :span="2">{{ payment.remark || '-' }}</el-descriptions-item>
-          <el-descriptions-item :label="t('detail.createdAt')">{{ payment.createdAt }}</el-descriptions-item>
-          <el-descriptions-item :label="t('detail.updatedAt')">{{ payment.updatedAt }}</el-descriptions-item>
+          <el-descriptions-item :label="t('detail.createdAt')">{{ formatDateTime(payment.createdAt) }}</el-descriptions-item>
+          <el-descriptions-item :label="t('detail.updatedAt')">{{ formatDateTime(payment.updatedAt) }}</el-descriptions-item>
         </el-descriptions>
 
         <!-- 失败错误详情：仅当状态为 FAILED 时展示，符合课程需求“查看失败支付错误详情” -->
@@ -35,7 +35,7 @@
           type="error"
           class="error-alert"
           :title="`${t('detail.errorCode')}: ${payment.errorCode || t('detail.unknown')}`"
-          :description="payment.errorMessage || t('detail.noErrorMessage')"
+          :description="errorDescription(payment.errorCode, payment.errorMessage)"
           show-icon
           :closable="false"
         />
@@ -52,7 +52,7 @@
             v-for="item in history"
             :key="item.id"
             :type="statusTimelineType(item.toStatus)"
-            :timestamp="item.createdAt"
+            :timestamp="formatDateTime(item.createdAt)"
             placement="top"
           >
             <div class="timeline-title">
@@ -60,7 +60,7 @@
               <el-tag size="small" type="info" effect="plain" class="operator-tag">{{ item.operator }}</el-tag>
             </div>
             <div v-if="item.errorCode" class="history-error">
-              {{ item.errorCode }}: {{ item.errorMessage }}
+              {{ item.errorCode }}: {{ errorDescription(item.errorCode, item.errorMessage) }}
             </div>
             <div v-if="item.remark" class="history-remark">{{ item.remark }}</div>
           </el-timeline-item>
@@ -85,11 +85,34 @@ const props = defineProps({
 });
 
 const router = useRouter();
-const { t } = useI18n();
+const { t, te, n, d } = useI18n();
 
 const payment = ref(null);
 const history = ref([]);
 const loading = ref(false);
+
+// 按支付自己的币种格式化金额，与列表页 formatAmount 逻辑保持一致
+function formatAmount(amount, currency) {
+  return n(amount, { key: 'currency', currency });
+}
+
+// 按当前界面语言的习惯格式化日期时间
+function formatDateTime(value) {
+  return value ? d(new Date(value), 'short') : '-';
+}
+
+/**
+ * 错误描述优先使用前端本地化字典（locales/*.js 中的 errors.···），保证同一错误码在三种界面语言下
+ * 都能展示对应语言的描述，而不受后端固定语言 message 的影响。
+ * 若错误码不在前端字典内（未收录的新错误码），回退展示后端返回的 errorMessage，再无则显示兼底文案。
+ */
+function errorDescription(code, fallbackMessage) {
+  const key = `errors.${code}`;
+  if (code && te(key)) {
+    return t(key);
+  }
+  return fallbackMessage || t('detail.noErrorMessage');
+}
 
 /** 状态到标签类型的映射：与列表页保持一致，避免同一状态在不同页面呈现不同颜色 */
 function statusTagType(status) {
