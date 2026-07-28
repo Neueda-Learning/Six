@@ -76,6 +76,18 @@ class PaymentValidatorTest {
         assertDoesNotThrow(() -> paymentValidator.validate(amount, "USD", "ACC10001", "ACC20001"));
     }
 
+    // ---------- 第三章：币种校验 ----------
+
+    // TC-12：合法的 ISO 4217 三位代码，但不在系统白名单内（如 JPY），应抛出 INVALID_CURRENCY。
+    // 金额在币种校验之前先通过，因此无需 mock accountMapper（校验会在到达账户校验前就已抛出异常）。
+    @Test
+    void validateCurrency_notInWhitelist_throwsInvalidCurrency() {
+        PaymentException ex = assertThrows(PaymentException.class,
+                () -> paymentValidator.validate(new BigDecimal("100"), "JPY", "ACC10001", "ACC20001"));
+
+        assertEquals(ErrorCode.INVALID_CURRENCY.name(), ex.getErrorCode());
+    }
+
     // ---------- 第四章：账户校验 ----------
 
     // TC-15：源账户与目标账户相同，应抛出 INVALID_ACCOUNT（在到达账户存在性校验之前就被拦截）
