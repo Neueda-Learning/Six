@@ -1,12 +1,15 @@
 // 该文件用于定义后端模块骨架，后续需完成对应业务逻辑、数据结构与接口实现。
 package com.example.payments.exception;
 
+import java.util.stream.Collectors;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import com.example.payments.dto.response.ApiResponse;
+import com.example.payments.enums.ErrorCode;
 
 /**
  * 全局异常处理器。
@@ -24,22 +27,27 @@ public class GlobalExceptionHandler {
      * @return 标准化错误响应
      */
     public ResponseEntity<ApiResponse<Object>> handlePaymentException(PaymentException ex) {
-        // todo enrich error payload with timestamp and request path if needed
         return ResponseEntity.status(ex.getHttpStatus())
                 .body(ApiResponse.fail(ex.getErrorCode(), ex.getMessage()));
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     /**
-     * 处理请求参数校验失败异常。
+     * 处理请求参数校验失败异常（如 @NotBlank、@DecimalMin 等注解校验不通过）。
+     * 将所有字段级错误信息聚合为一条可读的消息，方便前端定位具体是哪个字段不满足要求，
+     * 而不是返回一句固定不变的提示文案。
      *
      * @param ex 参数校验异常
      * @return 标准化错误响应
      */
     public ResponseEntity<ApiResponse<Object>> handleValidationException(MethodArgumentNotValidException ex) {
-        // todo aggregate field validation messages
+        // 拼接每个字段具体的错误描述，例如 "amount: 必须大于或等于 0.01"，多个字段用分号分隔
+        String detail = ex.getBindingResult().getFieldErrors().stream()
+                .map(fieldError -> fieldError.getField() + ": " + fieldError.getDefaultMessage())
+                .collect(Collectors.joining("; "));
+        String finalMessage = detail.isEmpty() ? "参数校验失败" : detail;
         return ResponseEntity.badRequest()
-                .body(ApiResponse.fail("VALIDATION_FAILED", "Request validation failed"));
+                .body(ApiResponse.fail(ErrorCode.VALIDATION_FAILED.name(), finalMessage));
     }
 
     @ExceptionHandler(Exception.class)
@@ -50,8 +58,7 @@ public class GlobalExceptionHandler {
      * @return 标准化错误响应
      */
     public ResponseEntity<ApiResponse<Object>> handleGeneralException(Exception ex) {
-        // todo log exception details
         return ResponseEntity.internalServerError()
-                .body(ApiResponse.fail("PROCESSING_ERROR", "Internal processing error"));
+                .body(ApiResponse.fail(ErrorCode.PROCESSING_ERROR.name(), "服务器内部处理异常: " + ex.getMessage()));
     }
 }

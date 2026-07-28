@@ -2,9 +2,14 @@
 package com.example.payments.entity;
 
 import java.time.LocalDateTime;
-import com.baomidou.mybatisplus.annotation.TableName;
+
 import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableName;
+
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 /**
  * 支付状态历史表对应的实体对象。
@@ -13,6 +18,9 @@ import lombok.Data;
  * 它主要服务于审计追踪、问题排查和前端时间线展示。
  */
 @Data
+@ToString
+@AllArgsConstructor
+@NoArgsConstructor
 @TableName("payment_status_history")
 public class PaymentStatusHistory {
 

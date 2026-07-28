@@ -6,8 +6,12 @@ import java.time.LocalDateTime;
 
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.baomidou.mybatisplus.annotation.Version;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 /**
  * 支付主表对应的实体对象。
@@ -16,6 +20,9 @@ import lombok.Data;
  * 在业务上，它代表支付生命周期中的“当前状态视图”，通常与历史表配合使用。
  */
 @Data
+@ToString
+@AllArgsConstructor
+@NoArgsConstructor
 @TableName("payments")
 public class Payment {
     @TableId
@@ -29,7 +36,11 @@ public class Payment {
     private String errorCode;
     private String errorMessage;
     private String remark;
+
+    // 乐观锁版本号：配合 MybatisPlusConfig 中注册的乐观锁插件，updateById 时自动附加版本号条件并递增，防止并发覆盖
+    @Version
     private Integer version;
+
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 

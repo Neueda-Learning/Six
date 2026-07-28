@@ -5,7 +5,11 @@ import java.time.LocalDateTime;
 
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 /**
  * 账户表对应的实体对象。
@@ -13,6 +17,9 @@ import lombok.Data;
  * 同时为前端或调试场景提供基础账户展示数据。
  */
 @Data
+@ToString
+@AllArgsConstructor
+@NoArgsConstructor
 @TableName("accounts")
 public class Account {
 

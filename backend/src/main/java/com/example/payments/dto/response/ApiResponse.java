@@ -1,12 +1,15 @@
 // 该文件用于定义后端模块骨架，后续需完成对应业务逻辑、数据结构与接口实现。
 package com.example.payments.dto.response;
 
+import lombok.Data;
+
 /**
  * 统一 API 响应包装对象。
  * 该类用于约定所有接口返回的外层结构，通过 success、data、errorCode 和 message 字段，
  * 让前端能够以一致方式处理成功结果与错误结果。
  * 它是控制器对外输出的标准响应模型之一。
  */
+@Data
 public class ApiResponse<T> {
 
     private boolean success;
