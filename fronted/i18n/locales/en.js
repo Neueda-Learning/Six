@@ -109,5 +109,20 @@ export default {
   http: {
     requestFailed: 'Request failed',
     networkError: 'Network request error'
+  },
+  // 前端本地化的错误码描述字典：与后端 ErrorCode 枚举一一对应。
+  // 用于在错误详情展示时优先使用（而不是直接展示后端固定语言的 message），
+  // 从而保证同一个错误码在三种界面语言下都能看到对应语言的描述。
+  errors: {
+    VALIDATION_FAILED: 'Basic form field validation failed',
+    INSUFFICIENT_FUNDS: 'Insufficient available balance in the source account',
+    INVALID_ACCOUNT: 'Invalid account format or the account does not exist',
+    INVALID_CURRENCY: 'Unsupported or non-compliant currency code',
+    INVALID_AMOUNT: 'Amount is zero, negative, or exceeds the single-transaction limit',
+    DUPLICATE_PAYMENT: 'Idempotency key conflict; the payment is already being processed',
+    INVALID_STATUS_TRANSITION: 'Attempted an illegal or backward status transition',
+    PAYMENT_NOT_FOUND: 'The requested payment ID does not exist',
+    PROCESSING_ERROR: 'An unexpected backend runtime error occurred',
+    NETWORK_ERROR: 'Simulated channel communication timed out and retries were exhausted'
   }
 };

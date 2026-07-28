@@ -67,14 +67,7 @@
         />
       </el-form-item>
 
-      <!-- 幂等键：页面加载时自动生成 UUID，用户可手动修改，用于验证重复提交场景 -->
-      <el-form-item :label="t('create.idempotencyKey')" prop="idempotencyKey">
-        <el-input v-model="form.idempotencyKey">
-          <template #append>
-            <el-button :icon="RefreshRight" @click="regenerateIdempotencyKey">{{ t('create.regenerate') }}</el-button>
-          </template>
-        </el-input>
-      </el-form-item>
+      <!-- 幂等键仍会在提交时随表单一起发送给后端（见 form.idempotencyKey 生成逻辑），但不在页面上展示给用户，因此此处不再渲染对应的 el-form-item -->
 
       <el-divider />
 
@@ -93,7 +86,7 @@ import { computed, reactive, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import { ElMessage } from 'element-plus';
-import { CirclePlus, User, RefreshRight, RefreshLeft, Check } from '@element-plus/icons-vue';
+import { CirclePlus, User, RefreshLeft, Check } from '@element-plus/icons-vue';
 import { createPayment } from '../api/payment';
 
 const router = useRouter();
@@ -120,17 +113,13 @@ const form = reactive({
 /**
  * 生成幂等键。
  * 优先使用浏览器原生 crypto.randomUUID；不支持时退化为时间戳+随机数拼接，保证仍然唯一。
+ * 该键仅用于后端幂等校验，不在页面上展示给用户。
  */
 function generateUuid() {
   if (window.crypto && typeof window.crypto.randomUUID === 'function') {
     return window.crypto.randomUUID();
   }
   return `uuid-${Date.now()}-${Math.random().toString(16).slice(2)}`;
-}
-
-/** 重新生成幂等键，便于用户测试“新支付”而非“重复提交”场景 */
-function regenerateIdempotencyKey() {
-  form.idempotencyKey = generateUuid();
 }
 
 /**
@@ -157,8 +146,7 @@ const rules = computed(() => ({
     { required: true, message: t('create.validation.amountRequired'), trigger: 'blur' },
     { type: 'number', min: 0.01, max: 1000000, message: t('create.validation.amountRange'), trigger: 'blur' }
   ],
-  currency: [{ required: true, message: t('create.validation.currencyRequired'), trigger: 'change' }],
-  idempotencyKey: [{ required: true, message: t('create.validation.idempotencyRequired'), trigger: 'blur' }]
+  currency: [{ required: true, message: t('create.validation.currencyRequired'), trigger: 'change' }]
 }));
 
 /** 提交表单：先做前端校验，通过后调用创建支付接口 */

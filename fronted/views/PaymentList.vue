@@ -61,7 +61,7 @@
       <el-table-column prop="toAccount" :label="t('list.columns.toAccount')" min-width="130" />
       <el-table-column :label="t('list.columns.amount')" width="150" align="right">
         <template #default="{ row }">
-          <span class="amount-cell">{{ row.amount }} {{ row.currency }}</span>
+          <span class="amount-cell">{{ formatAmount(row.amount, row.currency) }}</span>
         </template>
       </el-table-column>
       <el-table-column :label="t('list.columns.status')" width="130" align="center">
@@ -114,7 +114,13 @@ import { listPayments, softDeletePayment } from '../api/payment';
 import { formatDateTime } from '../utils/datetime';
 
 const router = useRouter();
-const { t } = useI18n();
+const { t, n } = useI18n();
+
+// 按支付自己的币种格式化金额：千分位分隔符/小数点符号随当前界面语言自动切换，
+// 货币符号则个据每笔支付自己的 currency 字段决定（不受界面语言影响）。
+function formatAmount(amount, currency) {
+  return n(amount, { key: 'currency', currency });
+}
 
 // 状态下拉选项：与后端 PaymentStatus 枚举保持一致
 const statusOptions = ['CREATED', 'VALIDATED', 'SENT', 'COMPLETED', 'FAILED'];

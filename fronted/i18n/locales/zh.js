@@ -109,5 +109,20 @@ export default {
   http: {
     requestFailed: '请求处理失败',
     networkError: '网络请求异常'
+  },
+  // 前端本地化的错误码描述字典：与后端 ErrorCode 枚举一一对应。
+  // 用于在错误详情展示时优先使用（而不是直接展示后端固定语言的 message），
+  // 从而保证同一个错误码在三种界面语言下都能看到对应语言的描述。
+  errors: {
+    VALIDATION_FAILED: '基础表单字段格式校验失败',
+    INSUFFICIENT_FUNDS: '付款账户可用余额不足',
+    INVALID_ACCOUNT: '账户格式非法或账户不存在',
+    INVALID_CURRENCY: '不支持的或不合规的货币代码',
+    INVALID_AMOUNT: '金额为零、负数或超过单笔限额',
+    DUPLICATE_PAYMENT: '幂等键冲突，该支付正在处理中',
+    INVALID_STATUS_TRANSITION: '企图越级或逆向流转状态',
+    PAYMENT_NOT_FOUND: '检索的支付记录不存在',
+    PROCESSING_ERROR: '后端运行时发生非预期异常',
+    NETWORK_ERROR: '模拟通道通信超时且重试次数耗尽'
   }
 };
