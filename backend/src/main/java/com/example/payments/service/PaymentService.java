@@ -88,6 +88,14 @@ public interface PaymentService {
     PaymentResponse permanentlyDeletePayment(Long id);
 
     /**
+     * 自动推进所有处于处理中状态的支付，每次最多推进一跳。
+     * 该方法供定时任务调用，用于模拟真实网络处理延迟下的异步状态演进。
+     *
+     * @return 本次实际推进的记录数
+     */
+    int autoAdvancePendingPayments();
+
+    /**
      * 手动更新支付状态，主要用于课程演示、模拟失败与非法流转校验场景。
      *
      * @param id      支付主键 ID

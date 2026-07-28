@@ -89,6 +89,8 @@ export default {
   detail: {
     title: '支付详情',
     basicInfo: '基础信息',
+    refreshStatus: '刷新状态',
+    autoRefreshing: '状态自动刷新中',
     paymentId: '支付 ID',
     idempotencyKey: '幂等键',
     fromAccount: '付款账户',

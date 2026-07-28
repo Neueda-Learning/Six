@@ -13,8 +13,14 @@
       <el-card class="info-card" shadow="never">
         <template #header>
           <div class="card-header">
-            <span class="card-title">{{ t('detail.basicInfo') }}</span>
-            <el-tag :type="statusTagType(payment.status)" effect="dark">{{ payment.status }}</el-tag>
+            <div class="header-main">
+              <span class="card-title">{{ t('detail.basicInfo') }}</span>
+              <el-tag :type="statusTagType(payment.status)" effect="dark">{{ payment.status }}</el-tag>
+            </div>
+            <div class="header-actions">
+              <span v-if="isPolling" class="polling-hint">{{ t('detail.autoRefreshing') }}</span>
+              <el-button :loading="refreshing" @click="handleRefresh">{{ t('detail.refreshStatus') }}</el-button>
+            </div>
           </div>
         </template>
 
@@ -71,10 +77,12 @@
 </template>
 
 <script setup>
-import { onMounted, ref } from 'vue';
+import { onMounted, onUnmounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import { getPaymentById, getPaymentHistory } from '../api/payment';
+
+const POLLING_INTERVAL_MS = 5000;
 
 // 路由配置中该页面使用 props: true，因此 id 直接作为组件 prop 传入，无需再手动解析 useRoute().params
 const props = defineProps({
@@ -90,6 +98,10 @@ const { t, te, n, d } = useI18n();
 const payment = ref(null);
 const history = ref([]);
 const loading = ref(false);
+const refreshing = ref(false);
+const isPolling = ref(false);
+
+let pollingTimer = null;
 
 // 按支付自己的币种格式化金额，与列表页 formatAmount 逻辑保持一致
 function formatAmount(amount, currency) {
@@ -137,8 +149,13 @@ function statusTimelineType(status) {
 }
 
 /** 并发加载支付详情与状态历史，减少等待时间 */
-async function fetchDetail() {
-  loading.value = true;
+async function fetchDetail(options = {}) {
+  const silent = options.silent === true;
+  if (silent) {
+    refreshing.value = true;
+  } else {
+    loading.value = true;
+  }
   try {
     const [detailRes, historyRes] = await Promise.all([
       getPaymentById(props.id),
@@ -146,14 +163,53 @@ async function fetchDetail() {
     ]);
     payment.value = detailRes.data;
     history.value = historyRes.data;
+    syncPolling();
   } catch (error) {
     // 错误提示（含 PAYMENT_NOT_FOUND 等）已由 http.js 拦截器统一处理
   } finally {
-    loading.value = false;
+    if (silent) {
+      refreshing.value = false;
+    } else {
+      loading.value = false;
+    }
   }
 }
 
+function shouldPoll(status) {
+  return status === 'CREATED' || status === 'VALIDATED' || status === 'SENT';
+}
+
+function stopPolling() {
+  if (pollingTimer !== null) {
+    clearInterval(pollingTimer);
+    pollingTimer = null;
+  }
+  isPolling.value = false;
+}
+
+function syncPolling() {
+  if (!shouldPoll(payment.value && payment.value.status)) {
+    stopPolling();
+    return;
+  }
+
+  if (pollingTimer !== null) {
+    isPolling.value = true;
+    return;
+  }
+
+  pollingTimer = setInterval(() => {
+    fetchDetail({ silent: true });
+  }, POLLING_INTERVAL_MS);
+  isPolling.value = true;
+}
+
+function handleRefresh() {
+  fetchDetail({ silent: true });
+}
+
 onMounted(fetchDetail);
+onUnmounted(stopPolling);
 </script>
 
 <style scoped>
@@ -181,11 +237,24 @@ onMounted(fetchDetail);
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 12px;
+}
+
+.header-main,
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .card-title {
   font-size: 16px;
   font-weight: 600;
+}
+
+.polling-hint {
+  color: #6b7280;
+  font-size: 13px;
 }
 
 .error-alert {

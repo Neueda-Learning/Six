@@ -41,6 +41,7 @@ import com.example.payments.validator.PaymentValidator;
 public class PaymentServiceImpl implements PaymentService {
 
     private static final int RECYCLE_BIN_RETENTION_DAYS = 30;
+    private static final String OPERATOR_SYSTEM_AUTO = "SYSTEM_AUTO";
 
     /** 审计历史记录中，系统自动触发（创建支付时的初始状态）的操作来源标识 */
     private static final String OPERATOR_SYSTEM = "SYSTEM";
@@ -212,6 +213,32 @@ public class PaymentServiceImpl implements PaymentService {
 
     @Override
     @Transactional
+    public int autoAdvancePendingPayments() {
+        List<Payment> pendingPayments = paymentMapper.selectList(new LambdaQueryWrapper<Payment>()
+                .isNull(Payment::getDeletedAt)
+                .isNull(Payment::getPermanentlyDeletedAt)
+                .in(Payment::getStatus,
+                        List.of(PaymentStatus.CREATED.name(), PaymentStatus.VALIDATED.name(),
+                                PaymentStatus.SENT.name()))
+                .orderByAsc(Payment::getUpdatedAt, Payment::getId));
+
+        int advancedCount = 0;
+        for (Payment payment : pendingPayments) {
+            PaymentStatus currentStatus = PaymentStatus.valueOf(payment.getStatus());
+            PaymentStatus nextStatus = nextAutoTransitionStatus(currentStatus);
+            if (nextStatus == null) {
+                continue;
+            }
+            applyStatusTransition(payment, currentStatus, nextStatus, null, null, payment.getRemark(),
+                    OPERATOR_SYSTEM_AUTO);
+            advancedCount++;
+        }
+
+        return advancedCount;
+    }
+
+    @Override
+    @Transactional
     public PaymentResponse softDeletePayment(Long id) {
         Payment payment = ensureActivePaymentExists(id);
         LocalDateTime now = LocalDateTime.now();
@@ -264,30 +291,53 @@ public class PaymentServiceImpl implements PaymentService {
                     String.format("不允许从 %s 流转到 %s", currentStatus, targetStatus), HttpStatus.BAD_REQUEST);
         }
 
-        // 3. 更新支付主记录；version 字段由 MyBatis-Plus 乐观锁插件自动附加更新条件并递增
+        applyStatusTransition(payment, currentStatus, targetStatus,
+                request.getErrorCode(), request.getErrorMessage(), request.getRemark(), OPERATOR_MANUAL);
+
+        return toResponse(payment);
+    }
+
+    private void applyStatusTransition(Payment payment,
+            PaymentStatus currentStatus,
+            PaymentStatus targetStatus,
+            String errorCode,
+            String errorMessage,
+            String remark,
+            String operator) {
+        if (!paymentStateMachine.canTransition(currentStatus, targetStatus)) {
+            throw new PaymentException(ErrorCode.INVALID_STATUS_TRANSITION.name(),
+                    String.format("不允许从 %s 流转到 %s", currentStatus, targetStatus), HttpStatus.BAD_REQUEST);
+        }
+
         LocalDateTime now = LocalDateTime.now();
         payment.setStatus(targetStatus.name());
-        payment.setErrorCode(request.getErrorCode());
-        payment.setErrorMessage(request.getErrorMessage());
-        if (StringUtils.hasText(request.getRemark())) {
-            payment.setRemark(request.getRemark());
+        payment.setErrorCode(errorCode);
+        payment.setErrorMessage(errorMessage);
+        if (StringUtils.hasText(remark)) {
+            payment.setRemark(remark);
         }
         payment.setUpdatedAt(now);
         paymentMapper.updateById(payment);
 
-        // 4. 写入本次状态变更的审计历史记录，操作来源标记为 MANUAL（区别于创建时的 SYSTEM）
         PaymentStatusHistory history = new PaymentStatusHistory();
         history.setPaymentId(payment.getId());
         history.setFromStatus(currentStatus.name());
         history.setToStatus(targetStatus.name());
-        history.setErrorCode(request.getErrorCode());
-        history.setErrorMessage(request.getErrorMessage());
-        history.setRemark(request.getRemark());
-        history.setOperator(OPERATOR_MANUAL);
+        history.setErrorCode(errorCode);
+        history.setErrorMessage(errorMessage);
+        history.setRemark(remark);
+        history.setOperator(operator);
         history.setCreatedAt(now);
         paymentStatusHistoryMapper.insert(history);
+    }
 
-        return toResponse(payment);
+    private PaymentStatus nextAutoTransitionStatus(PaymentStatus currentStatus) {
+        return switch (currentStatus) {
+            case CREATED -> PaymentStatus.VALIDATED;
+            case VALIDATED -> PaymentStatus.SENT;
+            case SENT -> PaymentStatus.COMPLETED;
+            default -> null;
+        };
     }
 
     /**

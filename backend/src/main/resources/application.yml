@@ -32,3 +32,6 @@ payments:
     - EUR
     - GBP
   network-max-retry: 3
+  auto-transition:
+    initial-delay-ms: 5000
+    fixed-delay-ms: 5000
