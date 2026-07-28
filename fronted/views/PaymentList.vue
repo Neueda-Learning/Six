@@ -4,9 +4,12 @@
     <template #header>
       <div class="card-header">
         <span class="card-title">{{ t('list.title') }}</span>
-        <el-button type="primary" :icon="CirclePlus" @click="router.push('/payments/create')">
-          {{ t('list.newPayment') }}
-        </el-button>
+        <div class="header-actions">
+          <span v-if="isPolling" class="polling-hint">{{ t('list.autoRefreshing') }}</span>
+          <el-button type="primary" :icon="CirclePlus" @click="router.push('/payments/create')">
+            {{ t('list.newPayment') }}
+          </el-button>
+        </div>
       </div>
     </template>
 
@@ -106,13 +109,17 @@
 </template>
 
 <script setup>
-import { onMounted, reactive, ref } from 'vue';
+import { onMounted, onUnmounted, reactive, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import { ElMessage } from 'element-plus';
 import { Search, RefreshLeft, CirclePlus } from '@element-plus/icons-vue';
 import { listPayments, softDeletePayment } from '../api/payment';
 import { formatDateTime } from '../utils/datetime';
+
+// 后端自动推进调度（PaymentAutoTransitionScheduler）每 5 秒推进一步，前端轮询间隔与之对齐，
+// 保证列表页能在后端状态变化后尽快看到最新结果，而不需要手动点“查询”。
+const POLLING_INTERVAL_MS = 5000;
 
 const router = useRouter();
 const { t, n } = useI18n();
@@ -137,6 +144,43 @@ const query = reactive({
 const tableData = ref([]);
 const total = ref(0);
 const loading = ref(false);
+const refreshing = ref(false);
+const isPolling = ref(false);
+
+let pollingTimer = null;
+
+/** 非终态状态（仍可能被后端自动推进）列表，与后端 PaymentStateMachine 的终态定义保持一致 */
+const PENDING_STATUSES = ['CREATED', 'VALIDATED', 'SENT'];
+
+/** 只要当前页表格中还存在非终态支付，就需要继续轮询，直到它们都轮转到 COMPLETED/FAILED 为止 */
+function shouldPoll(list) {
+  return list.some((item) => PENDING_STATUSES.includes(item.status));
+}
+
+function stopPolling() {
+  if (pollingTimer !== null) {
+    clearInterval(pollingTimer);
+    pollingTimer = null;
+  }
+  isPolling.value = false;
+}
+
+function syncPolling() {
+  if (!shouldPoll(tableData.value)) {
+    stopPolling();
+    return;
+  }
+
+  if (pollingTimer !== null) {
+    isPolling.value = true;
+    return;
+  }
+
+  pollingTimer = setInterval(() => {
+    fetchList({ silent: true });
+  }, POLLING_INTERVAL_MS);
+  isPolling.value = true;
+}
 
 /** 状态到 Element Plus 标签类型的映射，用于列表和详情页统一展示颜色 */
 function statusTagType(status) {
@@ -150,9 +194,17 @@ function statusTagType(status) {
   return map[status] || 'info';
 }
 
-/** 请求列表数据：将当前查询条件传给后端分页接口 */
-async function fetchList() {
-  loading.value = true;
+/**
+ * 请求列表数据：将当前查询条件传给后端分页接口。
+ * options.silent 为 true 时为轮询触发的静默刷新，不展示全表格 loading 遮罩，避免页面閃烁。
+ */
+async function fetchList(options = {}) {
+  const silent = options.silent === true;
+  if (silent) {
+    refreshing.value = true;
+  } else {
+    loading.value = true;
+  }
   try {
     const res = await listPayments({
       status: query.status || undefined,
@@ -163,10 +215,15 @@ async function fetchList() {
     // 后端分页数据结构：{ list, total, page, size }
     tableData.value = res.data.list;
     total.value = res.data.total;
+    syncPolling();
   } catch (error) {
     // 错误提示已由 http.js 拦截器统一处理
   } finally {
-    loading.value = false;
+    if (silent) {
+      refreshing.value = false;
+    } else {
+      loading.value = false;
+    }
   }
 }
 
@@ -210,6 +267,8 @@ function handleRowClick(row) {
 
 // 页面挂载时执行首次查询
 onMounted(fetchList);
+// 页面卸载时清理轮询定时器，避免离开列表页后仍在后台悄悄发请求
+onUnmounted(stopPolling);
 </script>
 
 <style scoped>
@@ -217,6 +276,19 @@ onMounted(fetchList);
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 12px;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.polling-hint {
+  color: #6b7280;
+  font-size: 13px;
+  white-space: nowrap;
 }
 
 .card-title {

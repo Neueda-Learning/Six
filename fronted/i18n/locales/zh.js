@@ -23,6 +23,7 @@ export default {
     reset: '重置',
     moveToTrash: '移到回收站',
     moveToTrashSuccess: '记录已移入回收站',
+    autoRefreshing: '列表自动刷新中',
     columns: {
       index: '#',
       paymentId: '支付 ID',

@@ -35,3 +35,6 @@ payments:
   auto-transition:
     initial-delay-ms: 5000
     fixed-delay-ms: 5000
+    # 每次定时任务推进一笔待处理支付时，随机判定为失败的概率（0~1）。
+    # 用于演示 FAILED 分支，而不是让所有支付都必然走到 COMPLETED。
+    failure-probability: 0.2
