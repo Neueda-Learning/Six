@@ -3,51 +3,56 @@
   <el-card class="list-page" shadow="never">
     <template #header>
       <div class="card-header">
-        <span class="card-title">{{ t('list.title') }}</span>
+        <span class="card-title">
+          <el-icon :size="18" class="title-icon"><List /></el-icon>
+          {{ t('list.title') }}
+        </span>
         <div class="header-actions">
-          <span v-if="isPolling" class="polling-hint">{{ t('list.autoRefreshing') }}</span>
-          <el-button type="primary" :icon="CirclePlus" @click="router.push('/payments/create')">
+          <span v-if="isPolling" class="polling-hint"><i class="polling-dot"></i>{{ t('list.autoRefreshing') }}</span>
+          <el-button type="primary" round :icon="CirclePlus" @click="router.push('/payments/create')">
             {{ t('list.newPayment') }}
           </el-button>
         </div>
       </div>
     </template>
 
-    <!-- 筛选栏：状态下拉 + 关键字输入 + 查询/重置按钮 -->
-    <el-form :inline="true" class="filter-bar">
-      <el-form-item :label="t('list.status')">
-        <el-select v-model="query.status" :placeholder="t('list.allStatuses')" clearable style="width: 180px">
-          <el-option v-for="item in statusOptions" :key="item" :label="item" :value="item" />
-        </el-select>
-      </el-form-item>
+    <!-- 筛选栏：状态下拉 + 关键字输入 + 查询/重置按钮，用浅色工具条包裹，与下方表格形成视觉分区 -->
+    <div class="toolbar">
+      <el-form :inline="true" class="filter-bar">
+        <el-form-item :label="t('list.status')">
+          <el-select v-model="query.status" :placeholder="t('list.allStatuses')" clearable style="width: 180px">
+            <el-option v-for="item in statusOptions" :key="item" :label="item" :value="item" />
+          </el-select>
+        </el-form-item>
 
-      <el-form-item :label="t('list.keyword')">
-        <!--
-          关键字输入框较窄，长语言（如德语）的完整 placeholder 会被截断显示不全。
-          用 el-tooltip 包裹输入框，在鼠标悬停/点击/聚焦时于输入框下方展示完整提示文案。
-          trigger 传数组同时启用三种触发方式：hover（悬停）、click（点击）、focus（聚焦，输入过程中保持显示）。
-        -->
-        <el-tooltip
-          :content="t('list.keywordPlaceholder')"
-          placement="bottom-start"
-          effect="dark"
-          :trigger="['hover', 'click', 'focus']"
-        >
-          <el-input
-            v-model="query.keyword"
-            :placeholder="t('list.keywordPlaceholder')"
-            clearable
-            :prefix-icon="Search"
-            style="width: 240px"
-          />
-        </el-tooltip>
-      </el-form-item>
+        <el-form-item :label="t('list.keyword')">
+          <!--
+            关键字输入框较窄，长语言（如德语）的完整 placeholder 会被截断显示不全。
+            用 el-tooltip 包裹输入框，在鼠标悬停/点击/聚焦时于输入框下方展示完整提示文案。
+            trigger 传数组同时启用三种触发方式：hover（悬停）、click（点击）、focus（聚焦，输入过程中保持显示）。
+          -->
+          <el-tooltip
+            :content="t('list.keywordPlaceholder')"
+            placement="bottom-start"
+            effect="dark"
+            :trigger="['hover', 'click', 'focus']"
+          >
+            <el-input
+              v-model="query.keyword"
+              :placeholder="t('list.keywordPlaceholder')"
+              clearable
+              :prefix-icon="Search"
+              style="width: 240px"
+            />
+          </el-tooltip>
+        </el-form-item>
 
-      <el-form-item>
-        <el-button type="primary" :icon="Search" @click="handleSearch">{{ t('list.search') }}</el-button>
-        <el-button :icon="RefreshLeft" @click="handleReset">{{ t('list.reset') }}</el-button>
-      </el-form-item>
-    </el-form>
+        <el-form-item>
+          <el-button type="primary" round :icon="Search" @click="handleSearch">{{ t('list.search') }}</el-button>
+          <el-button round :icon="RefreshLeft" @click="handleReset">{{ t('list.reset') }}</el-button>
+        </el-form-item>
+      </el-form>
+    </div>
 
     <!-- 支付列表表格：v-loading 绑定请求中状态，行点击跳转详情；header-cell-style 让表头文字统一居中 -->
     <el-table
@@ -113,7 +118,7 @@ import { onMounted, onUnmounted, reactive, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import { ElMessage } from 'element-plus';
-import { Search, RefreshLeft, CirclePlus } from '@element-plus/icons-vue';
+import { Search, RefreshLeft, CirclePlus, List } from '@element-plus/icons-vue';
 import { listPayments, softDeletePayment } from '../api/payment';
 import { formatDateTime } from '../utils/datetime';
 
@@ -279,26 +284,67 @@ onUnmounted(stopPolling);
   gap: 12px;
 }
 
-.header-actions {
+.card-title {
   display: flex;
   align-items: center;
   gap: 8px;
-}
-
-.polling-hint {
-  color: #6b7280;
-  font-size: 13px;
-  white-space: nowrap;
-}
-
-.card-title {
   font-size: 16px;
   font-weight: 600;
 }
 
-.filter-bar {
+.title-icon {
+  color: var(--color-primary);
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.polling-hint {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--color-primary-dark);
+  background: var(--color-primary-light);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.polling-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  animation: polling-pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes polling-pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.4;
+    transform: scale(0.7);
+  }
+}
+
+/* 工具条：把筛选表单包裹在浅色圆角容器里，与下方表格拉开视觉层次 */
+.toolbar {
+  background: #f8f9fc;
+  border-radius: 12px;
+  padding: 12px 16px 0;
   margin-top: 4px;
-  margin-bottom: 8px;
+  margin-bottom: 16px;
+}
+
+.filter-bar {
+  margin: 0;
 }
 
 .amount-cell {
@@ -307,6 +353,8 @@ onUnmounted(stopPolling);
 
 .pagination {
   margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #f0f1f5;
   justify-content: flex-end;
 }
 

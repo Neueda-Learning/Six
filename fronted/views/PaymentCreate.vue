@@ -3,7 +3,7 @@
   <el-card class="create-page" shadow="never">
     <template #header>
       <div class="card-header">
-        <el-icon :size="18"><CirclePlus /></el-icon>
+        <span class="header-icon-badge"><el-icon :size="18"><CirclePlus /></el-icon></span>
         <span class="card-title">{{ t('create.title') }}</span>
       </div>
     </template>
@@ -72,10 +72,10 @@
       <el-divider />
 
       <el-form-item>
-        <el-button type="primary" :icon="Check" :loading="submitting" @click="handleSubmit">
+        <el-button type="primary" round size="large" :icon="Check" :loading="submitting" @click="handleSubmit">
           {{ t('create.submit') }}
         </el-button>
-        <el-button :icon="RefreshLeft" @click="handleReset">{{ t('create.reset') }}</el-button>
+        <el-button round size="large" :icon="RefreshLeft" @click="handleReset">{{ t('create.reset') }}</el-button>
       </el-form-item>
     </el-form>
   </el-card>
@@ -185,7 +185,18 @@ function handleReset() {
 .card-header {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
+}
+
+.header-icon-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--color-primary-light);
+  color: var(--color-primary);
 }
 
 .card-title {
@@ -194,7 +205,7 @@ function handleReset() {
 }
 
 .create-form {
-  margin-top: 4px;
+  margin-top: 8px;
 }
 </style>
 

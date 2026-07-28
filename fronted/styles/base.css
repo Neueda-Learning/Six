@@ -1,8 +1,15 @@
 ﻿/* 该文件用于定义全局设计变量与基础样式，供各页面组件复用，保持视觉风格统一 */
 :root {
-  --page-bg: #f5f7fa;
+  /* 主色调采用蓝紫渐变体系，比单一纯色更有层次感 */
+  --color-primary: #4f6df5;
+  --color-primary-dark: #3d54d1;
+  --color-primary-light: #eef1ff;
+  --page-bg: #eef1f8;
   --text-color: #1f2329;
-  --card-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+  --text-secondary: #6b7280;
+  --card-radius: 16px;
+  --card-shadow: 0 4px 16px rgba(31, 41, 55, 0.06);
+  --card-shadow-hover: 0 10px 28px rgba(31, 41, 55, 0.1);
 }
 
 * {
@@ -17,13 +24,58 @@ body {
 }
 
 a {
-  color: #2563eb;
+  color: var(--color-primary);
   text-decoration: none;
 }
 
-/* 统一 Element Plus 卡片的圆角与阴影，避免每个页面重复定义 */
+/* 全局滚动条美化（WebKit 内核浏览器），细而不突兀 */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #c7cdda;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #a7afc2;
+}
+
+/* 统一 Element Plus 卡片的圆角与阴影，hover 时轻微上浮，增加层次感与交互反馈 */
 .el-card {
-  border-radius: 12px;
+  border-radius: var(--card-radius);
   box-shadow: var(--card-shadow) !important;
   border: none;
+  transition: box-shadow 0.25s ease;
+}
+
+.el-card:hover {
+  box-shadow: var(--card-shadow-hover) !important;
+}
+
+/* 按钮统一更圆润的圆角，视觉上更柔和 */
+.el-button {
+  border-radius: 8px;
+}
+
+/* 状态标签统一为胶囊形状，字重加粗，观感更精致清晰 */
+.el-tag {
+  border-radius: 999px;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+  padding: 0 12px;
+}
+
+/* 表格表头使用浅色底 + 深色字，与正文行区分更明显，层次更清楚 */
+.el-table thead th.el-table__cell {
+  background: #f5f7fc !important;
+  color: #4b5563;
+  font-weight: 600;
+}
+
+/* 表格行 hover 高亮，呼应可点击行的交互提示 */
+.el-table__body tr:hover > td.el-table__cell {
+  background-color: #eef1ff !important;
 }

@@ -9,7 +9,16 @@
           <el-icon :size="22" class="brand-icon"><Wallet /></el-icon>
           <span class="brand-title">{{ t('app.title') }}</span>
         </div>
-        <el-menu :default-active="route.path" mode="horizontal" router :ellipsis="false" class="nav-menu">
+        <el-menu
+          :default-active="route.path"
+          mode="horizontal"
+          router
+          :ellipsis="false"
+          class="nav-menu"
+          background-color="transparent"
+          text-color="rgba(255, 255, 255, 0.85)"
+          active-text-color="#ffffff"
+        >
           <el-menu-item index="/">
             <el-icon><List /></el-icon>
             <span>{{ t('app.navList') }}</span>
@@ -91,31 +100,49 @@ function handleLocaleChange(command) {
   align-items: center;
   justify-content: space-between;
   gap: 40px;
-  background: #ffffff;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+  /* 渐变色导航栏，替代原本的纯白背景，让整个应用更有辨识度 */
+  background: linear-gradient(135deg, #4f6df5 0%, #3d54d1 100%);
+  box-shadow: 0 4px 16px rgba(61, 84, 209, 0.25);
   padding: 0 24px;
-  height: 60px;
+  height: 64px;
 }
 
 .brand {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   white-space: nowrap;
 }
 
 .brand-icon {
-  color: #2563eb;
+  color: #ffffff;
 }
 
 .brand-title {
-  font-size: 18px;
-  font-weight: 600;
+  font-size: 19px;
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: 0.3px;
 }
 
 .nav-menu {
   border-bottom: none;
   flex: 1;
+}
+
+.nav-menu :deep(.el-menu-item) {
+  background: transparent;
+}
+
+.nav-menu :deep(.el-menu-item:hover),
+.nav-menu :deep(.el-menu-item:focus) {
+  background-color: rgba(255, 255, 255, 0.14) !important;
+}
+
+.nav-menu :deep(.el-menu-item.is-active) {
+  background-color: rgba(255, 255, 255, 0.18) !important;
+  border-bottom-color: #ffffff !important;
+  font-weight: 600;
 }
 
 .lang-switcher {
@@ -127,12 +154,20 @@ function handleLocaleChange(command) {
   align-items: center;
   gap: 4px;
   cursor: pointer;
-  color: #1f2329;
+  color: rgba(255, 255, 255, 0.9);
   white-space: nowrap;
+  padding: 6px 10px;
+  border-radius: 8px;
+  transition: background-color 0.2s ease;
+}
+
+.lang-trigger:hover {
+  background-color: rgba(255, 255, 255, 0.14);
+  color: #ffffff;
 }
 
 .is-active-lang {
-  color: #2563eb;
+  color: var(--color-primary);
   font-weight: 600;
 }
 

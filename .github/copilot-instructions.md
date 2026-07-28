@@ -2,7 +2,7 @@
 
 ## 1. 项目定位
 - 这是课程实践项目，目标是实现支付生命周期管理，不做大型企业级扩展。
-- 技术栈固定：Spring Boot 3.x + JDK 17 + Maven，前端 Vue 3 + Element Plus，数据库 MySQL，持久层 MyBatis-Plus。
+- 技术栈固定：Spring Boot 3.x + JDK 17 + Maven，前端 Vue 3 ，数据库 MySQL，持久层 MyBatis-Plus。
 
 ## 2. 功能范围边界
 
