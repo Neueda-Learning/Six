@@ -45,6 +45,10 @@ export default {
     empty: 'Keine Einträge im Papierkorb',
     restore: 'Wiederherstellen',
     restoreSuccess: 'Datensatz wurde wiederhergestellt',
+    confirmDelete: 'Endgültig löschen',
+    confirmDeleteSuccess: 'Datensatz wurde dauerhaft gelöscht und kann nicht wiederhergestellt werden',
+    confirmDeletePrompt: 'Diesen Datensatz dauerhaft löschen? Er kann danach nicht wiederhergestellt werden, bleibt aber in der Datenbank erhalten.',
+    cancel: 'Abbrechen',
     retentionHint: 'Papierkorb-Einträge werden standardmäßig 30 Tage angezeigt. Danach bleiben sie in der Datenbank erhalten, werden aber im UI nicht mehr angezeigt.',
     columns: {
       paymentId: 'Zahlungs-ID',

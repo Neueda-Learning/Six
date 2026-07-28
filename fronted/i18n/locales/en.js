@@ -45,6 +45,10 @@ export default {
     empty: 'No recently deleted records',
     restore: 'Restore',
     restoreSuccess: 'Record restored',
+    confirmDelete: 'Confirm Delete',
+    confirmDeleteSuccess: 'Record has been permanently deleted and cannot be restored',
+    confirmDeletePrompt: 'Permanently delete this record? It cannot be restored, but it will remain in the database.',
+    cancel: 'Cancel',
     retentionHint: 'Recycle bin entries are shown for 30 days by default. After that, they are hidden from the UI but still preserved in the database.',
     columns: {
       paymentId: 'Payment ID',

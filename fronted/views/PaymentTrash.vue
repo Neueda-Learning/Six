@@ -42,9 +42,21 @@
       <el-table-column prop="remark" :label="t('trash.columns.remark')" show-overflow-tooltip min-width="180" />
       <el-table-column prop="deletedAt" :label="t('trash.columns.deletedAt')" width="180" />
       <el-table-column prop="recoverableUntil" :label="t('trash.columns.recoverableUntil')" width="180" />
-      <el-table-column :label="t('trash.columns.actions')" width="120" align="center" fixed="right">
+      <el-table-column :label="t('trash.columns.actions')" width="200" align="center" fixed="right">
         <template #default="{ row }">
-          <el-button link type="primary" @click="handleRestore(row)">{{ t('trash.restore') }}</el-button>
+          <div class="action-group">
+            <el-button link type="primary" @click="handleRestore(row)">{{ t('trash.restore') }}</el-button>
+            <el-popconfirm
+              :title="t('trash.confirmDeletePrompt')"
+              :confirm-button-text="t('trash.confirmDelete')"
+              :cancel-button-text="t('trash.cancel')"
+              @confirm="handlePermanentDelete(row)"
+            >
+              <template #reference>
+                <el-button link type="danger">{{ t('trash.confirmDelete') }}</el-button>
+              </template>
+            </el-popconfirm>
+          </div>
         </template>
       </el-table-column>
 
@@ -72,7 +84,7 @@ import { onMounted, reactive, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { ElMessage } from 'element-plus';
 import { Search, RefreshLeft } from '@element-plus/icons-vue';
-import { listDeletedPayments, restorePayment } from '../api/payment';
+import { listDeletedPayments, permanentlyDeletePayment, restorePayment } from '../api/payment';
 
 const { t } = useI18n();
 
@@ -127,6 +139,19 @@ async function handleRestore(row) {
   }
 }
 
+async function handlePermanentDelete(row) {
+  try {
+    await permanentlyDeletePayment(row.id);
+    ElMessage.success(t('trash.confirmDeleteSuccess'));
+    if (tableData.value.length === 1 && query.page > 1) {
+      query.page -= 1;
+    }
+    fetchList();
+  } catch (error) {
+    // 错误提示已由 http.js 拦截器统一处理
+  }
+}
+
 function handleSearch() {
   query.page = 1;
   fetchList();
@@ -172,6 +197,13 @@ onMounted(fetchList);
 
 .amount-cell {
   font-variant-numeric: tabular-nums;
+}
+
+.action-group {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
 }
 
 .pagination {

@@ -79,6 +79,15 @@ public interface PaymentService {
     PaymentResponse restorePayment(Long id);
 
     /**
+     * 在回收站中确认永久删除，使记录从用户界面彻底隐藏且不可恢复。
+     * 注意：该操作不会物理删除数据库记录。
+     *
+     * @param id 支付主键 ID
+     * @return 更新后的支付详情
+     */
+    PaymentResponse permanentlyDeletePayment(Long id);
+
+    /**
      * 手动更新支付状态，主要用于课程演示、模拟失败与非法流转校验场景。
      *
      * @param id      支付主键 ID

@@ -23,6 +23,8 @@ public class PaymentSchemaMigrationRunner implements ApplicationRunner {
   public void run(ApplicationArguments args) {
     ensureDeletedAtColumn();
     ensureDeletedAtIndex();
+    ensurePermanentlyDeletedAtColumn();
+    ensurePermanentlyDeletedAtIndex();
   }
 
   private void ensureDeletedAtColumn() {
@@ -54,6 +56,38 @@ public class PaymentSchemaMigrationRunner implements ApplicationRunner {
 
     if (count != null && count == 0) {
       jdbcTemplate.execute("CREATE INDEX idx_payments_deleted_at ON payments(deleted_at)");
+    }
+  }
+
+  private void ensurePermanentlyDeletedAtColumn() {
+    Integer count = jdbcTemplate.queryForObject(
+        """
+            SELECT COUNT(*)
+            FROM information_schema.COLUMNS
+            WHERE TABLE_SCHEMA = DATABASE()
+              AND TABLE_NAME = 'payments'
+              AND COLUMN_NAME = 'permanently_deleted_at'
+            """,
+        Integer.class);
+
+    if (count != null && count == 0) {
+      jdbcTemplate.execute("ALTER TABLE payments ADD COLUMN permanently_deleted_at DATETIME NULL");
+    }
+  }
+
+  private void ensurePermanentlyDeletedAtIndex() {
+    Integer count = jdbcTemplate.queryForObject(
+        """
+            SELECT COUNT(*)
+            FROM information_schema.STATISTICS
+            WHERE TABLE_SCHEMA = DATABASE()
+              AND TABLE_NAME = 'payments'
+              AND INDEX_NAME = 'idx_payments_permanently_deleted_at'
+            """,
+        Integer.class);
+
+    if (count != null && count == 0) {
+      jdbcTemplate.execute("CREATE INDEX idx_payments_permanently_deleted_at ON payments(permanently_deleted_at)");
     }
   }
 }

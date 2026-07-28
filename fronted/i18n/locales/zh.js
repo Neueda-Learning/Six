@@ -45,6 +45,10 @@ export default {
     empty: '最近删除中暂无记录',
     restore: '恢复',
     restoreSuccess: '记录已恢复',
+    confirmDelete: '确认删除',
+    confirmDeleteSuccess: '记录已永久删除，无法恢复',
+    confirmDeletePrompt: '确认永久删除这条记录吗？删除后将无法恢复，但数据库仍会保留。',
+    cancel: '取消',
     retentionHint: '回收站默认保留 30 天，超期后不再展示但数据库仍保留记录。',
     columns: {
       paymentId: '支付 ID',
