@@ -67,3 +67,11 @@ export function restorePayment(id) {
   return http.patch(`/payments/${id}/restore`);
 }
 
+/**
+ * 在回收站中确认永久删除，使记录从前端界面彻底隐藏。
+ * @param {number|string} id 支付主键 ID
+ */
+export function permanentlyDeletePayment(id) {
+  return http.patch(`/payments/${id}/permanent-delete`);
+}
+

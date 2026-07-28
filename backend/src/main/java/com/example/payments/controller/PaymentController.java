@@ -142,6 +142,19 @@ public class PaymentController {
     }
 
     /**
+     * 在回收站中确认永久删除。
+     * 该操作只会让记录永久从用户界面消失，不会物理删除数据库数据。
+     *
+     * @param id 支付主键 ID
+     * @return 统一包装后的结果
+     */
+    @PatchMapping("/{id}/permanent-delete")
+    public ApiResponse<PaymentResponse> permanentlyDeletePayment(@PathVariable Long id) {
+        PaymentResponse response = paymentService.permanentlyDeletePayment(id);
+        return ApiResponse.ok(response);
+    }
+
+    /**
      * 手动推进或修改支付状态。
      * 该接口主要用于课程演示、测试异常流转和模拟失败场景，并不一定适用于真实生产流程。
      *

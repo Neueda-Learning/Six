@@ -122,7 +122,7 @@ public class PaymentServiceImpl implements PaymentService {
 
     @Override
     public PaymentResponse getPaymentById(Long id) {
-        return toResponse(ensurePaymentExists(id));
+        return toResponse(ensureActivePaymentExists(id));
     }
 
     @Override
@@ -147,6 +147,7 @@ public class PaymentServiceImpl implements PaymentService {
 
         LambdaQueryWrapper<Payment> wrapper = new LambdaQueryWrapper<>();
         wrapper.isNotNull(Payment::getDeletedAt)
+                .isNull(Payment::getPermanentlyDeletedAt)
                 .ge(Payment::getDeletedAt, recycleBinCutoff())
                 .orderByDesc(Payment::getDeletedAt);
 
@@ -178,7 +179,8 @@ public class PaymentServiceImpl implements PaymentService {
         int pageSize = (size == null || size < 1) ? DEFAULT_SIZE : size;
 
         LambdaQueryWrapper<Payment> wrapper = new LambdaQueryWrapper<>();
-        wrapper.isNull(Payment::getDeletedAt);
+        wrapper.isNull(Payment::getDeletedAt)
+                .isNull(Payment::getPermanentlyDeletedAt);
         // 按状态精确筛选（可选）
         if (StringUtils.hasText(status)) {
             wrapper.eq(Payment::getStatus, status.trim().toUpperCase(Locale.ROOT));
@@ -229,6 +231,20 @@ public class PaymentServiceImpl implements PaymentService {
                 .set(Payment::getDeletedAt, null)
                 .set(Payment::getUpdatedAt, now));
         payment.setDeletedAt(null);
+        payment.setUpdatedAt(now);
+        return toResponse(payment);
+    }
+
+    @Override
+    @Transactional
+    public PaymentResponse permanentlyDeletePayment(Long id) {
+        Payment payment = ensureRecoverableDeletedPaymentExists(id);
+        LocalDateTime now = LocalDateTime.now();
+        paymentMapper.update(null, new LambdaUpdateWrapper<Payment>()
+                .eq(Payment::getId, payment.getId())
+                .set(Payment::getPermanentlyDeletedAt, now)
+                .set(Payment::getUpdatedAt, now));
+        payment.setPermanentlyDeletedAt(now);
         payment.setUpdatedAt(now);
         return toResponse(payment);
     }
@@ -305,7 +321,7 @@ public class PaymentServiceImpl implements PaymentService {
      */
     private Payment ensureActivePaymentExists(Long id) {
         Payment payment = ensurePaymentExists(id);
-        if (payment.getDeletedAt() != null) {
+        if (payment.getDeletedAt() != null || payment.getPermanentlyDeletedAt() != null) {
             throw new PaymentException(ErrorCode.PAYMENT_NOT_FOUND.name(), "支付记录不存在: " + id,
                     HttpStatus.NOT_FOUND);
         }
@@ -317,7 +333,9 @@ public class PaymentServiceImpl implements PaymentService {
      */
     private Payment ensureRecoverableDeletedPaymentExists(Long id) {
         Payment payment = ensurePaymentExists(id);
-        if (payment.getDeletedAt() == null || payment.getDeletedAt().isBefore(recycleBinCutoff())) {
+        if (payment.getDeletedAt() == null
+                || payment.getPermanentlyDeletedAt() != null
+                || payment.getDeletedAt().isBefore(recycleBinCutoff())) {
             throw new PaymentException(ErrorCode.RECYCLE_BIN_RECORD_NOT_FOUND.name(), "回收站记录不存在或已超过恢复期限: " + id,
                     HttpStatus.NOT_FOUND);
         }

@@ -32,8 +32,10 @@ CREATE TABLE IF NOT EXISTS payments (
     created_at DATETIME NOT NULL,                              -- 支付创建时间
     updated_at DATETIME NOT NULL,                              -- 支付最近一次更新时间
     deleted_at DATETIME NULL,                                  -- 软删除时间：非空表示该记录已进入回收站，前端默认列表不展示
+    permanently_deleted_at DATETIME NULL,                      -- 永久隐藏时间：非空表示记录已从用户界面彻底隐藏，不可恢复，但数据库仍保留
     INDEX idx_payments_status (status),                        -- 按状态筛选支付列表时使用的索引
-    INDEX idx_payments_deleted_at (deleted_at)                 -- 回收站最近删除列表查询时使用的索引
+    INDEX idx_payments_deleted_at (deleted_at),                -- 回收站最近删除列表查询时使用的索引
+    INDEX idx_payments_permanently_deleted_at (permanently_deleted_at) -- 永久隐藏过滤时使用的索引
 );
 
 -- 支付状态历史表（audit trail）：记录每一次状态流转，作为支付时间线与失败原因的唯一数据来源
