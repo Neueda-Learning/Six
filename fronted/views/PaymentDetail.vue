@@ -9,8 +9,8 @@
     </el-page-header>
 
     <template v-if="payment">
-      <!-- 基础信息卡片：字段命名与后端 PaymentResponse 保持一致 -->
-      <el-card class="info-card" shadow="never">
+      <!-- 基础信息卡片：字段命名与后端 PaymentResponse 保持一致；左侧彩色竞调条随当前状态颜色变化，方便快速识别 -->
+      <el-card class="info-card" shadow="never" :style="{ '--status-accent': statusAccentColor(payment.status) }">
         <template #header>
           <div class="card-header">
             <div class="header-main">
@@ -18,8 +18,8 @@
               <el-tag :type="statusTagType(payment.status)" effect="dark">{{ payment.status }}</el-tag>
             </div>
             <div class="header-actions">
-              <span v-if="isPolling" class="polling-hint">{{ t('detail.autoRefreshing') }}</span>
-              <el-button :loading="refreshing" @click="handleRefresh">{{ t('detail.refreshStatus') }}</el-button>
+              <span v-if="isPolling" class="polling-hint"><i class="polling-dot"></i>{{ t('detail.autoRefreshing') }}</span>
+              <el-button round :loading="refreshing" @click="handleRefresh">{{ t('detail.refreshStatus') }}</el-button>
             </div>
           </div>
         </template>
@@ -50,7 +50,10 @@
       <!-- 状态变更历史时间线（audit trail） -->
       <el-card class="history-card" shadow="never">
         <template #header>
-          <span class="card-title">{{ t('detail.statusHistory') }}</span>
+          <span class="card-title">
+            <el-icon :size="16" class="title-icon"><Clock /></el-icon>
+            {{ t('detail.statusHistory') }}
+          </span>
         </template>
 
         <el-timeline>
@@ -60,6 +63,7 @@
             :type="statusTimelineType(item.toStatus)"
             :timestamp="formatDateTime(item.createdAt)"
             placement="top"
+            size="large"
           >
             <div class="timeline-title">
               <strong>{{ item.fromStatus || t('detail.start') }} → {{ item.toStatus }}</strong>
@@ -82,6 +86,7 @@ import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import { getPaymentById, getPaymentHistory } from '../api/payment';
 import { formatDateTime } from '../utils/datetime';
+import { Clock } from '@element-plus/icons-vue';
 
 const POLLING_INTERVAL_MS = 5000;
 
@@ -142,6 +147,18 @@ function statusTimelineType(status) {
     SENT: 'warning'
   };
   return map[status] || 'primary';
+}
+
+/** 状态对应的强调色值，用于信息卡片左侧的状态色强调条 */
+function statusAccentColor(status) {
+  const map = {
+    COMPLETED: '#67c23a',
+    FAILED: '#f56c6c',
+    SENT: '#e6a23c',
+    VALIDATED: '#909399',
+    CREATED: '#909399'
+  };
+  return map[status] || '#909399';
 }
 
 /** 并发加载支付详情与状态历史，减少等待时间 */
@@ -219,9 +236,9 @@ onUnmounted(stopPolling);
 
 .page-header {
   background: #ffffff;
-  border-radius: 12px;
+  border-radius: var(--card-radius);
   padding: 12px 20px;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+  box-shadow: var(--card-shadow);
 }
 
 .page-title {
@@ -244,13 +261,51 @@ onUnmounted(stopPolling);
 }
 
 .card-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   font-size: 16px;
   font-weight: 600;
 }
 
+.title-icon {
+  color: var(--color-primary);
+}
+
+.el-card.info-card {
+  border-left: 4px solid var(--status-accent, #909399) !important;
+}
+
 .polling-hint {
-  color: #6b7280;
-  font-size: 13px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--color-primary-dark);
+  background: var(--color-primary-light);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.polling-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  animation: polling-pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes polling-pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.4;
+    transform: scale(0.7);
+  }
 }
 
 .error-alert {

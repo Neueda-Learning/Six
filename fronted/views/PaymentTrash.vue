@@ -2,28 +2,33 @@
   <el-card class="trash-page" shadow="never">
     <template #header>
       <div class="card-header">
-        <span class="card-title">{{ t('trash.title') }}</span>
+        <span class="card-title">
+          <el-icon :size="18" class="title-icon"><Delete /></el-icon>
+          {{ t('trash.title') }}
+        </span>
       </div>
     </template>
 
     <el-alert :title="t('trash.retentionHint')" type="info" show-icon :closable="false" class="retention-alert" />
 
-    <el-form :inline="true" class="filter-bar">
-      <el-form-item :label="t('trash.keyword')">
-        <el-input
-          v-model="query.keyword"
-          :placeholder="t('trash.keywordPlaceholder')"
-          clearable
-          :prefix-icon="Search"
-          style="width: 260px"
-        />
-      </el-form-item>
+    <div class="toolbar">
+      <el-form :inline="true" class="filter-bar">
+        <el-form-item :label="t('trash.keyword')">
+          <el-input
+            v-model="query.keyword"
+            :placeholder="t('trash.keywordPlaceholder')"
+            clearable
+            :prefix-icon="Search"
+            style="width: 260px"
+          />
+        </el-form-item>
 
-      <el-form-item>
-        <el-button type="primary" :icon="Search" @click="handleSearch">{{ t('trash.search') }}</el-button>
-        <el-button :icon="RefreshLeft" @click="handleReset">{{ t('trash.reset') }}</el-button>
-      </el-form-item>
-    </el-form>
+        <el-form-item>
+          <el-button type="primary" round :icon="Search" @click="handleSearch">{{ t('trash.search') }}</el-button>
+          <el-button round :icon="RefreshLeft" @click="handleReset">{{ t('trash.reset') }}</el-button>
+        </el-form-item>
+      </el-form>
+    </div>
 
     <!-- header-cell-style 让表头文字统一居中，不影响各列正文内容原本的对齐方式 -->
     <el-table v-loading="loading" :data="tableData" stripe :header-cell-style="{ textAlign: 'center' }">
@@ -92,7 +97,7 @@
 import { onMounted, reactive, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { ElMessage } from 'element-plus';
-import { Search, RefreshLeft } from '@element-plus/icons-vue';
+import { Search, RefreshLeft, Delete } from '@element-plus/icons-vue';
 import { listDeletedPayments, permanentlyDeletePayment, restorePayment } from '../api/payment';
 import { formatDateTime } from '../utils/datetime';
 
@@ -193,16 +198,32 @@ onMounted(fetchList);
 }
 
 .card-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   font-size: 16px;
   font-weight: 600;
 }
 
+.title-icon {
+  color: var(--color-primary);
+}
+
 .retention-alert {
+  margin-bottom: 16px;
+  border-radius: 10px;
+}
+
+/* 工具条：与 PaymentList.vue 保持一致的浅色容器包裹风格 */
+.toolbar {
+  background: #f8f9fc;
+  border-radius: 12px;
+  padding: 12px 16px 0;
   margin-bottom: 16px;
 }
 
 .filter-bar {
-  margin-bottom: 8px;
+  margin: 0;
 }
 
 .amount-cell {
@@ -218,6 +239,8 @@ onMounted(fetchList);
 
 .pagination {
   margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #f0f1f5;
   justify-content: flex-end;
 }
 </style>
