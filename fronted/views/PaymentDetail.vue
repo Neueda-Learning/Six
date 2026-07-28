@@ -32,8 +32,8 @@
           <el-descriptions-item :label="t('detail.amount')">{{ payment.amount }}</el-descriptions-item>
           <el-descriptions-item :label="t('detail.currency')">{{ payment.currency }}</el-descriptions-item>
           <el-descriptions-item :label="t('detail.remark')" :span="2">{{ payment.remark || '-' }}</el-descriptions-item>
-          <el-descriptions-item :label="t('detail.createdAt')">{{ payment.createdAt }}</el-descriptions-item>
-          <el-descriptions-item :label="t('detail.updatedAt')">{{ payment.updatedAt }}</el-descriptions-item>
+          <el-descriptions-item :label="t('detail.createdAt')">{{ formatDateTime(payment.createdAt) }}</el-descriptions-item>
+          <el-descriptions-item :label="t('detail.updatedAt')">{{ formatDateTime(payment.updatedAt) }}</el-descriptions-item>
         </el-descriptions>
 
         <!-- 失败错误详情：仅当状态为 FAILED 时展示，符合课程需求“查看失败支付错误详情” -->
@@ -59,7 +59,7 @@
             v-for="item in history"
             :key="item.id"
             :type="statusTimelineType(item.toStatus)"
-            :timestamp="item.createdAt"
+            :timestamp="formatDateTime(item.createdAt)"
             placement="top"
           >
             <div class="timeline-title">
@@ -82,6 +82,7 @@ import { onMounted, onUnmounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import { getPaymentById, getPaymentHistory } from '../api/payment';
+import { formatDateTime } from '../utils/datetime';
 
 const POLLING_INTERVAL_MS = 5000;
 

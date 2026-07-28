@@ -71,7 +71,11 @@
         </template>
       </el-table-column>
       <el-table-column prop="remark" :label="t('list.columns.remark')" show-overflow-tooltip min-width="160" />
-      <el-table-column prop="createdAt" :label="t('list.columns.createdAt')" width="180" />
+      <el-table-column :label="t('list.columns.createdAt')" width="180">
+        <template #default="{ row }">
+          {{ formatDateTime(row.createdAt) }}
+        </template>
+      </el-table-column>
       <el-table-column :label="t('list.columns.actions')" width="140" align="center" fixed="right">
         <template #default="{ row }">
           <el-button link type="danger" @click.stop="handleMoveToTrash(row)">
@@ -107,6 +111,7 @@ import { useI18n } from 'vue-i18n';
 import { ElMessage } from 'element-plus';
 import { Search, RefreshLeft, CirclePlus } from '@element-plus/icons-vue';
 import { listPayments, softDeletePayment } from '../api/payment';
+import { formatDateTime } from '../utils/datetime';
 
 const router = useRouter();
 const { t } = useI18n();
