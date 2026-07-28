@@ -19,13 +19,25 @@
       </el-form-item>
 
       <el-form-item :label="t('list.keyword')">
-        <el-input
-          v-model="query.keyword"
-          :placeholder="t('list.keywordPlaceholder')"
-          clearable
-          :prefix-icon="Search"
-          style="width: 240px"
-        />
+        <!--
+          关键字输入框较窄，长语言（如德语）的完整 placeholder 会被截断显示不全。
+          用 el-tooltip 包裹输入框，在鼠标悬停/点击/聚焦时于输入框下方展示完整提示文案。
+          trigger 传数组同时启用三种触发方式：hover（悬停）、click（点击）、focus（聚焦，输入过程中保持显示）。
+        -->
+        <el-tooltip
+          :content="t('list.keywordPlaceholder')"
+          placement="bottom-start"
+          effect="dark"
+          :trigger="['hover', 'click', 'focus']"
+        >
+          <el-input
+            v-model="query.keyword"
+            :placeholder="t('list.keywordPlaceholder')"
+            clearable
+            :prefix-icon="Search"
+            style="width: 240px"
+          />
+        </el-tooltip>
       </el-form-item>
 
       <el-form-item>
