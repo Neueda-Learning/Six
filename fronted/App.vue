@@ -90,6 +90,7 @@ function handleLocaleChange(command) {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 40px;
   background: #ffffff;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
   padding: 0 24px;
@@ -118,7 +119,7 @@ function handleLocaleChange(command) {
 }
 
 .lang-switcher {
-  margin-left: 16px;
+  white-space: nowrap;
 }
 
 .lang-trigger {
