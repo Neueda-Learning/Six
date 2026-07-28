@@ -33,6 +33,8 @@ backend/*.log
 # environment and local overrides
 .env.local
 .env.*.local
+.env.development
+.env.production
 backend/src/main/resources/application-local.yml
 
 # temporary files
