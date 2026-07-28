@@ -3,7 +3,8 @@ export default {
   app: {
     title: 'Zahlungsverarbeitungssystem',
     navList: 'Zahlungen',
-    navCreate: 'Erstellen'
+    navCreate: 'Erstellen',
+    navTrash: 'Zuletzt gelöscht'
   },
   language: {
     label: 'Sprache',
@@ -20,6 +21,8 @@ export default {
     keywordPlaceholder: 'Nach Zahlungs-ID oder Bemerkung suchen',
     search: 'Suchen',
     reset: 'Zurücksetzen',
+    moveToTrash: 'In Papierkorb',
+    moveToTrashSuccess: 'Datensatz wurde in den Papierkorb verschoben',
     columns: {
       index: '#',
       paymentId: 'Zahlungs-ID',
@@ -28,9 +31,30 @@ export default {
       amount: 'Betrag',
       status: 'Status',
       remark: 'Bemerkung',
-      createdAt: 'Erstellt am'
+      createdAt: 'Erstellt am',
+      actions: 'Aktionen'
     },
     empty: 'Keine Zahlungen gefunden'
+  },
+  trash: {
+    title: 'Zuletzt gelöscht',
+    keyword: 'Stichwort',
+    keywordPlaceholder: 'Nach Zahlungs-ID oder Bemerkung suchen',
+    search: 'Suchen',
+    reset: 'Zurücksetzen',
+    empty: 'Keine Einträge im Papierkorb',
+    restore: 'Wiederherstellen',
+    restoreSuccess: 'Datensatz wurde wiederhergestellt',
+    retentionHint: 'Papierkorb-Einträge werden standardmäßig 30 Tage angezeigt. Danach bleiben sie in der Datenbank erhalten, werden aber im UI nicht mehr angezeigt.',
+    columns: {
+      paymentId: 'Zahlungs-ID',
+      amount: 'Betrag',
+      status: 'Status',
+      remark: 'Bemerkung',
+      deletedAt: 'Gelöscht am',
+      recoverableUntil: 'Wiederherstellbar bis',
+      actions: 'Aktionen'
+    }
   },
   create: {
     title: 'Zahlung erstellen',

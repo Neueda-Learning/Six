@@ -43,6 +43,7 @@ public class Payment {
 
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    private LocalDateTime deletedAt;
 
     // todo add MyBatis-Plus annotations for id/version and generate getters/setters
 }

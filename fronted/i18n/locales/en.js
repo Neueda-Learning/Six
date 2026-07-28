@@ -3,7 +3,8 @@ export default {
   app: {
     title: 'Payments Processing System',
     navList: 'Payments',
-    navCreate: 'Create'
+    navCreate: 'Create',
+    navTrash: 'Recently Deleted'
   },
   language: {
     label: 'Language',
@@ -20,6 +21,8 @@ export default {
     keywordPlaceholder: 'Search by payment ID or remark',
     search: 'Search',
     reset: 'Reset',
+    moveToTrash: 'Move to Trash',
+    moveToTrashSuccess: 'Record moved to recycle bin',
     columns: {
       index: '#',
       paymentId: 'Payment ID',
@@ -28,9 +31,30 @@ export default {
       amount: 'Amount',
       status: 'Status',
       remark: 'Remark',
-      createdAt: 'Created At'
+      createdAt: 'Created At',
+      actions: 'Actions'
     },
     empty: 'No payments found'
+  },
+  trash: {
+    title: 'Recently Deleted',
+    keyword: 'Keyword',
+    keywordPlaceholder: 'Search by payment ID or remark',
+    search: 'Search',
+    reset: 'Reset',
+    empty: 'No recently deleted records',
+    restore: 'Restore',
+    restoreSuccess: 'Record restored',
+    retentionHint: 'Recycle bin entries are shown for 30 days by default. After that, they are hidden from the UI but still preserved in the database.',
+    columns: {
+      paymentId: 'Payment ID',
+      amount: 'Amount',
+      status: 'Status',
+      remark: 'Remark',
+      deletedAt: 'Deleted At',
+      recoverableUntil: 'Recoverable Until',
+      actions: 'Actions'
+    }
   },
   create: {
     title: 'Create Payment',

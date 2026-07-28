@@ -3,7 +3,8 @@ export default {
   app: {
     title: '支付处理系统',
     navList: '支付列表',
-    navCreate: '创建支付'
+    navCreate: '创建支付',
+    navTrash: '最近删除'
   },
   language: {
     label: '语言',
@@ -20,6 +21,8 @@ export default {
     keywordPlaceholder: '按支付 ID 或备注搜索',
     search: '查询',
     reset: '重置',
+    moveToTrash: '移到回收站',
+    moveToTrashSuccess: '记录已移入回收站',
     columns: {
       index: '#',
       paymentId: '支付 ID',
@@ -28,9 +31,30 @@ export default {
       amount: '金额',
       status: '状态',
       remark: '备注',
-      createdAt: '创建时间'
+      createdAt: '创建时间',
+      actions: '操作'
     },
     empty: '暂无支付记录'
+  },
+  trash: {
+    title: '最近删除',
+    keyword: '关键字',
+    keywordPlaceholder: '按支付 ID 或备注搜索',
+    search: '查询',
+    reset: '重置',
+    empty: '最近删除中暂无记录',
+    restore: '恢复',
+    restoreSuccess: '记录已恢复',
+    retentionHint: '回收站默认保留 30 天，超期后不再展示但数据库仍保留记录。',
+    columns: {
+      paymentId: '支付 ID',
+      amount: '金额',
+      status: '状态',
+      remark: '备注',
+      deletedAt: '删除时间',
+      recoverableUntil: '可恢复至',
+      actions: '操作'
+    }
   },
   create: {
     title: '创建支付',

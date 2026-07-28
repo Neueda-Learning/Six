@@ -72,6 +72,13 @@
       </el-table-column>
       <el-table-column prop="remark" :label="t('list.columns.remark')" show-overflow-tooltip min-width="160" />
       <el-table-column prop="createdAt" :label="t('list.columns.createdAt')" width="180" />
+      <el-table-column :label="t('list.columns.actions')" width="140" align="center" fixed="right">
+        <template #default="{ row }">
+          <el-button link type="danger" @click.stop="handleMoveToTrash(row)">
+            {{ t('list.moveToTrash') }}
+          </el-button>
+        </template>
+      </el-table-column>
 
       <template #empty>
         <el-empty :description="t('list.empty')" />
@@ -97,8 +104,9 @@
 import { onMounted, reactive, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
+import { ElMessage } from 'element-plus';
 import { Search, RefreshLeft, CirclePlus } from '@element-plus/icons-vue';
-import { listPayments } from '../api/payment';
+import { listPayments, softDeletePayment } from '../api/payment';
 
 const router = useRouter();
 const { t } = useI18n();
@@ -147,6 +155,19 @@ async function fetchList() {
     // 错误提示已由 http.js 拦截器统一处理
   } finally {
     loading.value = false;
+  }
+}
+
+async function handleMoveToTrash(row) {
+  try {
+    await softDeletePayment(row.id);
+    ElMessage.success(t('list.moveToTrashSuccess'));
+    if (tableData.value.length === 1 && query.page > 1) {
+      query.page -= 1;
+    }
+    fetchList();
+  } catch (error) {
+    // 错误提示已由 http.js 拦截器统一处理
   }
 }
 

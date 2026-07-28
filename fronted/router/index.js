@@ -3,6 +3,7 @@ import { createRouter, createWebHistory } from 'vue-router';
 import PaymentList from '../views/PaymentList.vue';
 import PaymentCreate from '../views/PaymentCreate.vue';
 import PaymentDetail from '../views/PaymentDetail.vue';
+import PaymentTrash from '../views/PaymentTrash.vue';
 
 const routes = [
   {
@@ -14,6 +15,11 @@ const routes = [
     path: '/payments/create',
     name: 'PaymentCreate',
     component: PaymentCreate
+  },
+  {
+    path: '/payments/recycle-bin',
+    name: 'PaymentTrash',
+    component: PaymentTrash
   },
   {
     path: '/payments/:id',
