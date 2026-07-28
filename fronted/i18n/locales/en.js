@@ -52,6 +52,8 @@ export default {
     retentionHint: 'Recycle bin entries are shown for 30 days by default. After that, they are hidden from the UI but still preserved in the database.',
     columns: {
       paymentId: 'Payment ID',
+      fromAccount: 'From Account',
+      toAccount: 'To Account',
       amount: 'Amount',
       status: 'Status',
       remark: 'Remark',

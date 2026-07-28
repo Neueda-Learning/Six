@@ -52,6 +52,8 @@ export default {
     retentionHint: 'Papierkorb-Einträge werden standardmäßig 30 Tage angezeigt. Danach bleiben sie in der Datenbank erhalten, werden aber im UI nicht mehr angezeigt.',
     columns: {
       paymentId: 'Zahlungs-ID',
+      fromAccount: 'Von Konto',
+      toAccount: 'An Konto',
       amount: 'Betrag',
       status: 'Status',
       remark: 'Bemerkung',

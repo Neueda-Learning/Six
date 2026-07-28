@@ -52,6 +52,8 @@ export default {
     retentionHint: '回收站默认保留 30 天，超期后不再展示但数据库仍保留记录。',
     columns: {
       paymentId: '支付 ID',
+      fromAccount: '付款账户',
+      toAccount: '收款账户',
       amount: '金额',
       status: '状态',
       remark: '备注',
@@ -96,7 +98,7 @@ export default {
     fromAccount: '付款账户',
     toAccount: '收款账户',
     amount: '金额',
-    currency: '币种',
+    currency: '货币',
     remark: '备注',
     createdAt: '创建时间',
     updatedAt: '更新时间',

@@ -25,11 +25,12 @@
       </el-form-item>
     </el-form>
 
-    <el-table v-loading="loading" :data="tableData" stripe>
-      <el-table-column prop="id" :label="t('trash.columns.paymentId')" width="110" />
-      <el-table-column prop="fromAccount" label="From" min-width="130" />
-      <el-table-column prop="toAccount" label="To" min-width="130" />
-      <el-table-column :label="t('trash.columns.amount')" width="150" align="right">
+    <!-- header-cell-style 让表头文字统一居中，不影响各列正文内容原本的对齐方式 -->
+    <el-table v-loading="loading" :data="tableData" stripe :header-cell-style="{ textAlign: 'center' }">
+      <el-table-column prop="id" :label="t('trash.columns.paymentId')" width="110" align="center" />
+      <el-table-column prop="fromAccount" :label="t('trash.columns.fromAccount')" min-width="130" align="center" />
+      <el-table-column prop="toAccount" :label="t('trash.columns.toAccount')" min-width="130" align="center" />
+      <el-table-column :label="t('trash.columns.amount')" width="150" align="center">
         <template #default="{ row }">
           <span class="amount-cell">{{ row.amount }} {{ row.currency }}</span>
         </template>
@@ -40,12 +41,12 @@
         </template>
       </el-table-column>
       <el-table-column prop="remark" :label="t('trash.columns.remark')" show-overflow-tooltip min-width="180" />
-      <el-table-column :label="t('trash.columns.deletedAt')" width="180">
+      <el-table-column :label="t('trash.columns.deletedAt')" width="180" align="center">
         <template #default="{ row }">
           {{ formatDateTime(row.deletedAt) }}
         </template>
       </el-table-column>
-      <el-table-column :label="t('trash.columns.recoverableUntil')" width="180">
+      <el-table-column :label="t('trash.columns.recoverableUntil')" width="180" align="center">
         <template #default="{ row }">
           {{ formatDateTime(row.recoverableUntil) }}
         </template>

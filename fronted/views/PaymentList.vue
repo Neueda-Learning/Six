@@ -46,7 +46,7 @@
       </el-form-item>
     </el-form>
 
-    <!-- 支付列表表格：v-loading 绑定请求中状态，行点击跳转详情 -->
+    <!-- 支付列表表格：v-loading 绑定请求中状态，行点击跳转详情；header-cell-style 让表头文字统一居中 -->
     <el-table
       v-loading="loading"
       :data="tableData"
@@ -54,12 +54,13 @@
       @row-click="handleRowClick"
       class="clickable-table"
       stripe
+      :header-cell-style="{ textAlign: 'center' }"
     >
-      <el-table-column type="index" :label="t('list.columns.index')" width="56" />
-      <el-table-column prop="id" :label="t('list.columns.paymentId')" width="110" />
-      <el-table-column prop="fromAccount" :label="t('list.columns.fromAccount')" min-width="130" />
-      <el-table-column prop="toAccount" :label="t('list.columns.toAccount')" min-width="130" />
-      <el-table-column :label="t('list.columns.amount')" width="150" align="right">
+      <el-table-column type="index" :label="t('list.columns.index')" width="56" align="center" />
+      <el-table-column prop="id" :label="t('list.columns.paymentId')" width="110" align="center" />
+      <el-table-column prop="fromAccount" :label="t('list.columns.fromAccount')" min-width="130" align="center" />
+      <el-table-column prop="toAccount" :label="t('list.columns.toAccount')" min-width="130" align="center" />
+      <el-table-column :label="t('list.columns.amount')" width="150" align="center">
         <template #default="{ row }">
           <span class="amount-cell">{{ formatAmount(row.amount, row.currency) }}</span>
         </template>
