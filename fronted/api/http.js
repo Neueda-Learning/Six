@@ -9,6 +9,22 @@ const http = axios.create({
   timeout: 10000
 });
 
+function pickErrorMessage(payload) {
+  if (!payload) {
+    return '';
+  }
+
+  if (typeof payload === 'string') {
+    return payload;
+  }
+
+  if (typeof payload.message === 'string' && payload.message.trim()) {
+    return payload.message;
+  }
+
+  return '';
+}
+
 http.interceptors.response.use(
   (response) => {
     // 后端统一响应信封结构为 { success, data, errorCode, message }
@@ -26,7 +42,7 @@ http.interceptors.response.use(
   },
   (error) => {
     // 网络异常或非 2xx 状态码：尝试从后端错误响应体中取出 message，否则退回到前端本地化的兜底文案
-    const backendMessage = error.response && error.response.data && error.response.data.message;
+    const backendMessage = pickErrorMessage(error.response && error.response.data);
     ElMessage.error(backendMessage || error.message || i18n.global.t('http.networkError'));
     return Promise.reject(error);
   }
