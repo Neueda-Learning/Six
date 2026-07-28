@@ -23,6 +23,7 @@ export default {
     reset: 'Zurücksetzen',
     moveToTrash: 'In Papierkorb',
     moveToTrashSuccess: 'Datensatz wurde in den Papierkorb verschoben',
+    autoRefreshing: 'Liste wird automatisch aktualisiert',
     columns: {
       index: '#',
       paymentId: 'Zahlungs-ID',

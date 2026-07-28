@@ -4,8 +4,11 @@ package com.example.payments.service.impl;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -43,6 +46,22 @@ public class PaymentServiceImpl implements PaymentService {
     private static final int RECYCLE_BIN_RETENTION_DAYS = 30;
     private static final String OPERATOR_SYSTEM_AUTO = "SYSTEM_AUTO";
 
+    /**
+     * 自动推进流程中，不同当前状态下模拟失败时可选用的错误码。
+     * 按业务场景贴近真实原因：CREATED 阶段模拟校验类失败，VALIDATED 阶段模拟处理异常，
+     * SENT 阶段模拟发送后网络确认超时，避免所有失败都用同一个错误码，展示效果更真实。
+     */
+    private static final Map<PaymentStatus, List<String>> AUTO_FAILURE_CANDIDATE_ERROR_CODES = Map.of(
+            PaymentStatus.CREATED, List.of(ErrorCode.INSUFFICIENT_FUNDS.name(), ErrorCode.PROCESSING_ERROR.name()),
+            PaymentStatus.VALIDATED, List.of(ErrorCode.PROCESSING_ERROR.name()),
+            PaymentStatus.SENT, List.of(ErrorCode.NETWORK_ERROR.name()));
+
+    /** 每个自动失败错误码对应的模拟错误描述，写入 errorMessage 字段供前端详情页展示 */
+    private static final Map<String, String> AUTO_FAILURE_ERROR_MESSAGES = Map.of(
+            ErrorCode.INSUFFICIENT_FUNDS.name(), "mock insufficient balance in from_account",
+            ErrorCode.PROCESSING_ERROR.name(), "mock unexpected processing error during auto transition",
+            ErrorCode.NETWORK_ERROR.name(), "mock network timeout after max retries");
+
     /** 审计历史记录中，系统自动触发（创建支付时的初始状态）的操作来源标识 */
     private static final String OPERATOR_SYSTEM = "SYSTEM";
 
@@ -59,6 +78,15 @@ public class PaymentServiceImpl implements PaymentService {
     private final PaymentStatusHistoryMapper paymentStatusHistoryMapper;
     private final PaymentValidator paymentValidator;
     private final PaymentStateMachine paymentStateMachine;
+
+    /**
+     * 自动推进定时任务中，每笔待处理支付被判定为失败的概率（0~1），对应 application.yml 中的
+     * payments.auto-transition.failure-probability，默认 0.2（20%）。
+     * 由于每笔支付在走到终态前最多会被检查 3 次（CREATED/VALIDATED/SENT 各一次），
+     * 默认配置下最终失败的整体概率约为 1-(1-0.2)^3 ≈ 49%，可通过配置调整演示效果。
+     */
+    @Value("${payments.auto-transition.failure-probability:0.2}")
+    private double autoFailureProbability;
 
     public PaymentServiceImpl(PaymentMapper paymentMapper,
             PaymentStatusHistoryMapper paymentStatusHistoryMapper,
@@ -225,6 +253,18 @@ public class PaymentServiceImpl implements PaymentService {
         int advancedCount = 0;
         for (Payment payment : pendingPayments) {
             PaymentStatus currentStatus = PaymentStatus.valueOf(payment.getStatus());
+
+            // 按配置的概率随机判定本次是否模拟失败，而不是一律走向下一个正常状态，
+            // 这样可以在演示时同时看到 COMPLETED 与 FAILED 两种真实分支效果。
+            if (ThreadLocalRandom.current().nextDouble() < autoFailureProbability) {
+                String errorCode = pickAutoFailureErrorCode(currentStatus);
+                applyStatusTransition(payment, currentStatus, PaymentStatus.FAILED,
+                        errorCode, AUTO_FAILURE_ERROR_MESSAGES.get(errorCode), payment.getRemark(),
+                        OPERATOR_SYSTEM_AUTO);
+                advancedCount++;
+                continue;
+            }
+
             PaymentStatus nextStatus = nextAutoTransitionStatus(currentStatus);
             if (nextStatus == null) {
                 continue;
@@ -338,6 +378,16 @@ public class PaymentServiceImpl implements PaymentService {
             case SENT -> PaymentStatus.COMPLETED;
             default -> null;
         };
+    }
+
+    /**
+     * 按当前状态从候选错误码列表中随机挑选一个，用于自动推进流程模拟失败场景。
+     * 未在候选表中登记的状态（理论上不会发生）统一兜底为 PROCESSING_ERROR。
+     */
+    private String pickAutoFailureErrorCode(PaymentStatus currentStatus) {
+        List<String> candidates = AUTO_FAILURE_CANDIDATE_ERROR_CODES.getOrDefault(currentStatus,
+                List.of(ErrorCode.PROCESSING_ERROR.name()));
+        return candidates.get(ThreadLocalRandom.current().nextInt(candidates.size()));
     }
 
     /**

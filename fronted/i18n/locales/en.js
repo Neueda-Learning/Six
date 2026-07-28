@@ -23,6 +23,7 @@ export default {
     reset: 'Reset',
     moveToTrash: 'Move to Trash',
     moveToTrashSuccess: 'Record moved to recycle bin',
+    autoRefreshing: 'List is refreshing automatically',
     columns: {
       index: '#',
       paymentId: 'Payment ID',
