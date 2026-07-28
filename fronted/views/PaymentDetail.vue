@@ -20,7 +20,6 @@
 
         <el-descriptions :column="2" border>
           <el-descriptions-item :label="t('detail.paymentId')">{{ payment.id }}</el-descriptions-item>
-          <el-descriptions-item :label="t('detail.idempotencyKey')">{{ payment.idempotencyKey }}</el-descriptions-item>
           <el-descriptions-item :label="t('detail.fromAccount')">{{ payment.fromAccount }}</el-descriptions-item>
           <el-descriptions-item :label="t('detail.toAccount')">{{ payment.toAccount }}</el-descriptions-item>
           <el-descriptions-item :label="t('detail.amount')">{{ payment.amount }}</el-descriptions-item>
