@@ -27,6 +27,14 @@ export function getPaymentHistory(id) {
 }
 
 /**
+ * 查询最近删除记录回收站。
+ * @param {Object} params 查询参数：keyword/page/size
+ */
+export function listDeletedPayments(params) {
+  return http.get('/payments/recycle-bin', { params });
+}
+
+/**
  * 分页查询支付列表，支持按状态与关键字筛选。
  * @param {Object} params 查询参数：status/keyword/page/size
  */
@@ -41,5 +49,21 @@ export function listPayments(params) {
  */
 export function updatePaymentStatus(id, payload) {
   return http.patch(`/payments/${id}/status`, payload);
+}
+
+/**
+ * 将记录移入回收站。
+ * @param {number|string} id 支付主键 ID
+ */
+export function softDeletePayment(id) {
+  return http.patch(`/payments/${id}/delete`);
+}
+
+/**
+ * 从回收站恢复记录。
+ * @param {number|string} id 支付主键 ID
+ */
+export function restorePayment(id) {
+  return http.patch(`/payments/${id}/restore`);
 }
 

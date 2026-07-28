@@ -18,6 +18,10 @@
             <el-icon><CirclePlus /></el-icon>
             <span>{{ t('app.navCreate') }}</span>
           </el-menu-item>
+          <el-menu-item index="/payments/recycle-bin">
+            <el-icon><Delete /></el-icon>
+            <span>{{ t('app.navTrash') }}</span>
+          </el-menu-item>
         </el-menu>
 
         <!-- 语言切换器：下拉选择 中文/English/Deutsch，选择后立即切换并持久化到 localStorage -->
@@ -53,7 +57,7 @@
 import { computed } from 'vue';
 import { useRoute } from 'vue-router';
 import { useI18n } from 'vue-i18n';
-import { Wallet, List, CirclePlus, Position } from '@element-plus/icons-vue';
+import { Wallet, List, CirclePlus, Delete, Position } from '@element-plus/icons-vue';
 import zhCn from 'element-plus/dist/locale/zh-cn.mjs';
 import en from 'element-plus/dist/locale/en.mjs';
 import de from 'element-plus/dist/locale/de.mjs';

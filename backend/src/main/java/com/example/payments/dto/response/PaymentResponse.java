@@ -33,6 +33,8 @@ public class PaymentResponse {
     private String remark;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    private LocalDateTime deletedAt;
+    private LocalDateTime recoverableUntil;
 
     // todo generate getters/setters
 }

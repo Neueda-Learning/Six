@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.example.payments.dto.request.CreatePaymentRequest;
 import com.example.payments.dto.request.UpdatePaymentStatusRequest;
@@ -38,6 +39,8 @@ import com.example.payments.validator.PaymentValidator;
  */
 @Service
 public class PaymentServiceImpl implements PaymentService {
+
+    private static final int RECYCLE_BIN_RETENTION_DAYS = 30;
 
     /** 审计历史记录中，系统自动触发（创建支付时的初始状态）的操作来源标识 */
     private static final String OPERATOR_SYSTEM = "SYSTEM";
@@ -125,7 +128,7 @@ public class PaymentServiceImpl implements PaymentService {
     @Override
     public List<PaymentHistoryItemResponse> getPaymentHistory(Long id) {
         // 先确认支付是否存在，不存在则统一返回 PAYMENT_NOT_FOUND，与详情接口保持一致的错误语义
-        ensurePaymentExists(id);
+        ensureActivePaymentExists(id);
 
         List<PaymentStatusHistory> historyList = paymentStatusHistoryMapper.selectList(
                 new LambdaQueryWrapper<PaymentStatusHistory>()
@@ -138,11 +141,44 @@ public class PaymentServiceImpl implements PaymentService {
     }
 
     @Override
+    public PageResponse<PaymentResponse> listDeletedPayments(String keyword, Integer page, Integer size) {
+        int pageNum = (page == null || page < 1) ? DEFAULT_PAGE : page;
+        int pageSize = (size == null || size < 1) ? DEFAULT_SIZE : size;
+
+        LambdaQueryWrapper<Payment> wrapper = new LambdaQueryWrapper<>();
+        wrapper.isNotNull(Payment::getDeletedAt)
+                .ge(Payment::getDeletedAt, recycleBinCutoff())
+                .orderByDesc(Payment::getDeletedAt);
+
+        if (StringUtils.hasText(keyword)) {
+            String trimmedKeyword = keyword.trim();
+            Long keywordAsId = parseAsId(trimmedKeyword);
+            wrapper.and(qw -> {
+                if (keywordAsId != null) {
+                    qw.eq(Payment::getId, keywordAsId).or().like(Payment::getRemark, trimmedKeyword);
+                } else {
+                    qw.like(Payment::getRemark, trimmedKeyword);
+                }
+            });
+        }
+
+        Page<Payment> pageResult = paymentMapper.selectPage(new Page<>(pageNum, pageSize), wrapper);
+
+        PageResponse<PaymentResponse> response = new PageResponse<>();
+        response.setList(pageResult.getRecords().stream().map(this::toResponse).collect(Collectors.toList()));
+        response.setTotal(pageResult.getTotal());
+        response.setPage(pageNum);
+        response.setSize(pageSize);
+        return response;
+    }
+
+    @Override
     public PageResponse<PaymentResponse> listPayments(String status, String keyword, Integer page, Integer size) {
         int pageNum = (page == null || page < 1) ? DEFAULT_PAGE : page;
         int pageSize = (size == null || size < 1) ? DEFAULT_SIZE : size;
 
         LambdaQueryWrapper<Payment> wrapper = new LambdaQueryWrapper<>();
+        wrapper.isNull(Payment::getDeletedAt);
         // 按状态精确筛选（可选）
         if (StringUtils.hasText(status)) {
             wrapper.eq(Payment::getStatus, status.trim().toUpperCase(Locale.ROOT));
@@ -174,8 +210,33 @@ public class PaymentServiceImpl implements PaymentService {
 
     @Override
     @Transactional
+    public PaymentResponse softDeletePayment(Long id) {
+        Payment payment = ensureActivePaymentExists(id);
+        LocalDateTime now = LocalDateTime.now();
+        payment.setDeletedAt(now);
+        payment.setUpdatedAt(now);
+        paymentMapper.updateById(payment);
+        return toResponse(payment);
+    }
+
+    @Override
+    @Transactional
+    public PaymentResponse restorePayment(Long id) {
+        Payment payment = ensureRecoverableDeletedPaymentExists(id);
+        LocalDateTime now = LocalDateTime.now();
+        paymentMapper.update(null, new LambdaUpdateWrapper<Payment>()
+                .eq(Payment::getId, payment.getId())
+                .set(Payment::getDeletedAt, null)
+                .set(Payment::getUpdatedAt, now));
+        payment.setDeletedAt(null);
+        payment.setUpdatedAt(now);
+        return toResponse(payment);
+    }
+
+    @Override
+    @Transactional
     public PaymentResponse updatePaymentStatus(Long id, UpdatePaymentStatusRequest request) {
-        Payment payment = ensurePaymentExists(id);
+        Payment payment = ensureActivePaymentExists(id);
 
         // 1. 解析目标状态：传入非法的状态字符串视为参数校验失败，而不是状态流转非法
         PaymentStatus targetStatus = parseStatus(request.getTargetStatus());
@@ -240,6 +301,34 @@ public class PaymentServiceImpl implements PaymentService {
     }
 
     /**
+     * 按主键查询可在正常前端列表中展示的支付。
+     */
+    private Payment ensureActivePaymentExists(Long id) {
+        Payment payment = ensurePaymentExists(id);
+        if (payment.getDeletedAt() != null) {
+            throw new PaymentException(ErrorCode.PAYMENT_NOT_FOUND.name(), "支付记录不存在: " + id,
+                    HttpStatus.NOT_FOUND);
+        }
+        return payment;
+    }
+
+    /**
+     * 按主键查询仍处于回收站有效期内的记录。
+     */
+    private Payment ensureRecoverableDeletedPaymentExists(Long id) {
+        Payment payment = ensurePaymentExists(id);
+        if (payment.getDeletedAt() == null || payment.getDeletedAt().isBefore(recycleBinCutoff())) {
+            throw new PaymentException(ErrorCode.RECYCLE_BIN_RECORD_NOT_FOUND.name(), "回收站记录不存在或已超过恢复期限: " + id,
+                    HttpStatus.NOT_FOUND);
+        }
+        return payment;
+    }
+
+    private LocalDateTime recycleBinCutoff() {
+        return LocalDateTime.now().minusDays(RECYCLE_BIN_RETENTION_DAYS);
+    }
+
+    /**
      * 将目标状态字符串解析为 PaymentStatus 枚举，非法值统一转换为 VALIDATION_FAILED 异常。
      *
      * @param targetStatus 请求中提交的目标状态字符串
@@ -288,6 +377,10 @@ public class PaymentServiceImpl implements PaymentService {
         response.setRemark(payment.getRemark());
         response.setCreatedAt(payment.getCreatedAt());
         response.setUpdatedAt(payment.getUpdatedAt());
+        response.setDeletedAt(payment.getDeletedAt());
+        if (payment.getDeletedAt() != null) {
+            response.setRecoverableUntil(payment.getDeletedAt().plusDays(RECYCLE_BIN_RETENTION_DAYS));
+        }
         return response;
     }
 
@@ -311,4 +404,3 @@ public class PaymentServiceImpl implements PaymentService {
         return response;
     }
 }
-

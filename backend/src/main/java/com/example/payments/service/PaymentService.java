@@ -42,6 +42,16 @@ public interface PaymentService {
     List<PaymentHistoryItemResponse> getPaymentHistory(Long id);
 
     /**
+     * 查询最近删除的支付列表，仅返回仍在 30 天回收窗口内的记录。
+     *
+     * @param keyword 关键字筛选条件（可选，匹配支付 ID 或备注）
+     * @param page    页码，从 1 开始
+     * @param size    每页条数
+     * @return 分页结果对象
+     */
+    PageResponse<PaymentResponse> listDeletedPayments(String keyword, Integer page, Integer size);
+
+    /**
      * 按条件分页查询支付列表。
      *
      * @param status  支付状态筛选条件（可选）
@@ -53,6 +63,22 @@ public interface PaymentService {
     PageResponse<PaymentResponse> listPayments(String status, String keyword, Integer page, Integer size);
 
     /**
+     * 将支付记录移入回收站。
+     *
+     * @param id 支付主键 ID
+     * @return 更新后的支付详情
+     */
+    PaymentResponse softDeletePayment(Long id);
+
+    /**
+     * 将支付记录从回收站恢复。
+     *
+     * @param id 支付主键 ID
+     * @return 恢复后的支付详情
+     */
+    PaymentResponse restorePayment(Long id);
+
+    /**
      * 手动更新支付状态，主要用于课程演示、模拟失败与非法流转校验场景。
      *
      * @param id      支付主键 ID
@@ -61,4 +87,3 @@ public interface PaymentService {
      */
     PaymentResponse updatePaymentStatus(Long id, UpdatePaymentStatusRequest request);
 }
-

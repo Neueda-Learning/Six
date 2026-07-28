@@ -5,7 +5,7 @@ spring:
       on-profile: prod
   datasource:
     # //todo production mysql config
-    url: jdbc:mysql://localhost:3306/payments_db_prod?useSSL=false&serverTimezone=UTC&characterEncoding=UTF-8
+    url: jdbc:mysql://localhost:3306/payments_db_prod?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&characterEncoding=UTF-8
     username: root
     password: n3u3da!
 

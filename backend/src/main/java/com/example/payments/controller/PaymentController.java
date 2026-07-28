@@ -81,6 +81,23 @@ public class PaymentController {
     }
 
     /**
+     * 查询最近删除记录回收站。
+     *
+     * @param keyword 可选的关键字过滤条件
+     * @param page    当前页码
+     * @param size    每页条数
+     * @return 统一包装后的分页结果
+     */
+    @GetMapping("/recycle-bin")
+    public ApiResponse<PageResponse<PaymentResponse>> listDeletedPayments(
+            @RequestParam(required = false) String keyword,
+            @RequestParam(defaultValue = "1") Integer page,
+            @RequestParam(defaultValue = "10") Integer size) {
+        PageResponse<PaymentResponse> response = paymentService.listDeletedPayments(keyword, page, size);
+        return ApiResponse.ok(response);
+    }
+
+    /**
      * 分页查询支付列表，并按状态或关键字进行筛选。
      * 该接口通常服务于列表页或后台管理页，用于快速定位特定支付记录。
      *
@@ -101,6 +118,30 @@ public class PaymentController {
     }
 
     /**
+     * 将一条支付记录移入回收站。
+     *
+     * @param id 支付主键 ID
+     * @return 统一包装后的更新结果
+     */
+    @PatchMapping("/{id}/delete")
+    public ApiResponse<PaymentResponse> softDeletePayment(@PathVariable Long id) {
+        PaymentResponse response = paymentService.softDeletePayment(id);
+        return ApiResponse.ok(response);
+    }
+
+    /**
+     * 将一条支付记录从回收站恢复。
+     *
+     * @param id 支付主键 ID
+     * @return 统一包装后的恢复结果
+     */
+    @PatchMapping("/{id}/restore")
+    public ApiResponse<PaymentResponse> restorePayment(@PathVariable Long id) {
+        PaymentResponse response = paymentService.restorePayment(id);
+        return ApiResponse.ok(response);
+    }
+
+    /**
      * 手动推进或修改支付状态。
      * 该接口主要用于课程演示、测试异常流转和模拟失败场景，并不一定适用于真实生产流程。
      *
@@ -116,4 +157,3 @@ public class PaymentController {
         return ApiResponse.ok(response);
     }
 }
-
