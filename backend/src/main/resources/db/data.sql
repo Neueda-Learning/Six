@@ -2,14 +2,14 @@
 
 USE payments_db;
 
--- 账户模拟数据：供账户存在性校验使用（来源账户/目标账户必须在此列表中）
-INSERT INTO accounts (account_no, owner_name, currency, status, created_at) VALUES
-('ACC10001', 'Alice Zhang', 'USD', 'ACTIVE', '2026-01-01 09:00:00'),
-('ACC10002', 'Bob Chen', 'EUR', 'ACTIVE', '2026-01-01 09:00:00'),
-('ACC10003', 'Cindy Wang', 'GBP', 'ACTIVE', '2026-01-01 09:00:00'),
-('ACC20001', 'David Li', 'USD', 'ACTIVE', '2026-01-01 09:00:00'),
-('ACC20002', 'Eva Liu', 'EUR', 'ACTIVE', '2026-01-01 09:00:00'),
-('ACC20003', 'Frank Zhou', 'GBP', 'ACTIVE', '2026-01-01 09:00:00');
+-- 账户模拟数据：供账户存在性与余额充足性校验使用（来源账户/目标账户必须在此列表中）
+INSERT INTO accounts (account_no, owner_name, currency, status, balance, created_at) VALUES
+('ACC10001', 'Alice Zhang', 'USD', 'ACTIVE', 100000.00, '2026-01-01 09:00:00'),
+('ACC10002', 'Bob Chen', 'EUR', 'ACTIVE', 100000.00, '2026-01-01 09:00:00'),
+('ACC10003', 'Cindy Wang', 'GBP', 'ACTIVE', 100000.00, '2026-01-01 09:00:00'),
+('ACC20001', 'David Li', 'USD', 'ACTIVE', 100000.00, '2026-01-01 09:00:00'),
+('ACC20002', 'Eva Liu', 'EUR', 'ACTIVE', 100000.00, '2026-01-01 09:00:00'),
+('ACC20003', 'Frank Zhou', 'GBP', 'ACTIVE', 100000.00, '2026-01-01 09:00:00');
 
 -- 支付模拟数据：覆盖 COMPLETED / SENT / VALIDATED / CREATED / FAILED（校验失败与网络失败）五种典型状态
 INSERT INTO payments

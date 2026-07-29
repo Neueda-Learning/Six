@@ -13,6 +13,7 @@ CREATE TABLE IF NOT EXISTS accounts (
     owner_name VARCHAR(100) NOT NULL,                          -- 账户持有人姓名，仅用于模拟数据展示
     currency VARCHAR(3) NOT NULL,                              -- 账户默认币种（ISO 4217三位代码，如USD/EUR/GBP）
     status VARCHAR(20) NOT NULL DEFAULT 'ACTIVE',              -- 账户状态，如ACTIVE表示可用，仅用于模拟校验，不参与真实风控
+    balance DECIMAL(18,2) NOT NULL DEFAULT 100000.00,          -- 账户可用余额，仅用于发起支付前的余额充足性只读校验
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP     -- 账户记录创建时间
 );
 
