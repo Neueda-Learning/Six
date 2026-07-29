@@ -15,9 +15,9 @@ ALTER TABLE accounts
 -- 初始化各账户余额：
 -- ACC10002 特意设置为较低余额（300.00），用于配合 data.sql 中 id=5 那笔 8000.00 USD 的
 -- INSUFFICIENT_FUNDS 失败种子数据的业务背景；其余账户余额相对充裕，便于日常测试正常通过余额校验。
-UPDATE accounts SET balance = 5000.00  WHERE account_no = 'ACC10001';
-UPDATE accounts SET balance = 300.00   WHERE account_no = 'ACC10002';
-UPDATE accounts SET balance = 10000.00 WHERE account_no = 'ACC10003';
-UPDATE accounts SET balance = 2000.00  WHERE account_no = 'ACC20001';
-UPDATE accounts SET balance = 800.00   WHERE account_no = 'ACC20002';
-UPDATE accounts SET balance = 15000.00 WHERE account_no = 'ACC20003';
+UPDATE accounts SET balance = 100000.00  WHERE account_no = 'ACC10001';
+UPDATE accounts SET balance = 100000.00   WHERE account_no = 'ACC10002';
+UPDATE accounts SET balance = 100000.00 WHERE account_no = 'ACC10003';
+UPDATE accounts SET balance = 100000.00  WHERE account_no = 'ACC20001';
+UPDATE accounts SET balance = 100000.00   WHERE account_no = 'ACC20002';
+UPDATE accounts SET balance = 100000.00 WHERE account_no = 'ACC20003';
