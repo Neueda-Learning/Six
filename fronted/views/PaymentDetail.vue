@@ -1,8 +1,9 @@
 ﻿<!-- 支付详情页面：展示单笔支付的基础信息、失败错误详情（如有）以及完整状态变更历史时间线 -->
 <template>
   <div class="detail-page" v-loading="loading">
-    <!-- 页头：带返回按钮，点击返回列表页 -->
-    <el-page-header class="page-header" @back="router.push('/')">
+    <!-- 页头：带返回按钮，使用 router.back() 而非固定跳转到 '/'，这样从列表页进入详情后点击返回，
+         能回到列表页之前的完整 URL（包含状态筛选/关键字/页码等 query 参数），而不会丢失筛选条件 -->
+    <el-page-header class="page-header" @back="router.back()">
       <template #content>
         <span class="page-title">{{ t('detail.title') }}</span>
       </template>

@@ -115,7 +115,7 @@
 
 <script setup>
 import { onMounted, onUnmounted, reactive, ref } from 'vue';
-import { useRouter } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import { ElMessage } from 'element-plus';
 import { Search, RefreshLeft, CirclePlus, List } from '@element-plus/icons-vue';
@@ -127,6 +127,7 @@ import { formatDateTime } from '../utils/datetime';
 const POLLING_INTERVAL_MS = 5000;
 
 const router = useRouter();
+const route = useRoute();
 const { t, n } = useI18n();
 
 // 按支付自己的币种格式化金额：千分位分隔符/小数点符号随当前界面语言自动切换，
@@ -138,12 +139,19 @@ function formatAmount(amount, currency) {
 // 状态下拉选项：与后端 PaymentStatus 枚举保持一致
 const statusOptions = ['CREATED', 'VALIDATED', 'SENT', 'COMPLETED', 'FAILED'];
 
-// 查询条件：page/size 与后端分页参数命名一致，status 为空表示不筛选
+// 查询条件：page/size 与后端分页参数命名一致，status 为空表示不筛选。
+// 初始值优先从当前路由 query 参数读取，这样从详情页返回列表页时（地址栏已带有之前的筛选条件）
+// 能直接恢复上次的状态/关键字/页码，而不是重新回到第一页。
+function parsePositiveInt(value, fallback) {
+  const parsed = Number(value);
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : fallback;
+}
+
 const query = reactive({
-  status: '',
-  keyword: '',
-  page: 1,
-  size: 10
+  status: typeof route.query.status === 'string' ? route.query.status : '',
+  keyword: typeof route.query.keyword === 'string' ? route.query.keyword : '',
+  page: parsePositiveInt(route.query.page, 1),
+  size: parsePositiveInt(route.query.size, 10)
 });
 
 const tableData = ref([]);
@@ -200,8 +208,30 @@ function statusTagType(status) {
 }
 
 /**
+ * 把当前筛选/分页状态同步到地址栏 query 参数（使用 replace 而非 push，避免每次查询都产生新的浏览器历史记录）。
+ * 因为列表页自己的 URL 已经反映了当前筛选条件，从详情页点击“返回”（router.back()）时，
+ * 浏览器会自然回到这个带有完整筛选条件的 URL，无需额外传递状态。
+ * 默认值（空筛选、第 1 页、每页 10 条）不写入 query，保持地址栏干净。
+ */
+function syncQueryToRoute() {
+  router
+    .replace({
+      query: {
+        status: query.status || undefined,
+        keyword: query.keyword || undefined,
+        page: query.page !== 1 ? query.page : undefined,
+        size: query.size !== 10 ? query.size : undefined
+      }
+    })
+    .catch(() => {
+      // 目标 URL 与当前相同时 vue-router 会报 NavigationDuplicated/冗余导航，忽略即可
+    });
+}
+
+/**
  * 请求列表数据：将当前查询条件传给后端分页接口。
- * options.silent 为 true 时为轮询触发的静默刷新，不展示全表格 loading 遮罩，避免页面閃烁。
+ * options.silent 为 true 时为轮询触发的静默刷新，不展示全表格 loading 遮罩，避免页面閃烁，
+ * 也不需要同步 URL query（后台自动刷新不算用户主动发起的查询）。
  */
 async function fetchList(options = {}) {
   const silent = options.silent === true;
@@ -209,6 +239,7 @@ async function fetchList(options = {}) {
     refreshing.value = true;
   } else {
     loading.value = true;
+    syncQueryToRoute();
   }
   try {
     const res = await listPayments({
