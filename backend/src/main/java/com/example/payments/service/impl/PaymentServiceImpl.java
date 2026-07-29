@@ -48,19 +48,21 @@ public class PaymentServiceImpl implements PaymentService {
 
     /**
      * 自动推进流程中，不同当前状态下模拟失败时可选用的错误码。
-     * 按业务场景贴近真实原因：CREATED 阶段模拟校验类失败，VALIDATED 阶段模拟处理异常，
-     * SENT 阶段模拟发送后网络确认超时，避免所有失败都用同一个错误码，展示效果更真实。
+     * CREATED 阶段的 INSUFFICIENT_FUNDS 已改由 hasSufficientBalance 做真实余额判断产生，
+     * 不再纳入随机模拟范围，避免同一个错误码既可能是真实原因、又可能是随机凑数，造成语义混乱。
      */
     private static final Map<PaymentStatus, List<String>> AUTO_FAILURE_CANDIDATE_ERROR_CODES = Map.of(
-            PaymentStatus.CREATED, List.of(ErrorCode.INSUFFICIENT_FUNDS.name(), ErrorCode.PROCESSING_ERROR.name()),
+            PaymentStatus.CREATED, List.of(ErrorCode.PROCESSING_ERROR.name()),
             PaymentStatus.VALIDATED, List.of(ErrorCode.PROCESSING_ERROR.name()),
             PaymentStatus.SENT, List.of(ErrorCode.NETWORK_ERROR.name()));
 
     /** 每个自动失败错误码对应的模拟错误描述，写入 errorMessage 字段供前端详情页展示 */
     private static final Map<String, String> AUTO_FAILURE_ERROR_MESSAGES = Map.of(
-            ErrorCode.INSUFFICIENT_FUNDS.name(), "mock insufficient balance in from_account",
             ErrorCode.PROCESSING_ERROR.name(), "mock unexpected processing error during auto transition",
             ErrorCode.NETWORK_ERROR.name(), "mock network timeout after max retries");
+
+    /** 余额不足时写入 errorMessage 的固定描述，CREATED -> VALIDATED 真实余额校验失败时使用 */
+    private static final String INSUFFICIENT_BALANCE_MESSAGE = "源账户余额不足，无法完成本次支付校验";
 
     /** 审计历史记录中，系统自动触发（创建支付时的初始状态）的操作来源标识 */
     private static final String OPERATOR_SYSTEM = "SYSTEM";
@@ -253,6 +255,20 @@ public class PaymentServiceImpl implements PaymentService {
         int advancedCount = 0;
         for (Payment payment : pendingPayments) {
             PaymentStatus currentStatus = PaymentStatus.valueOf(payment.getStatus());
+            PaymentStatus nextStatus = nextAutoTransitionStatus(currentStatus);
+            if (nextStatus == null) {
+                continue;
+            }
+
+            // 余额校验优先于随机失败模拟：CREATED -> VALIDATED 时，若源账户余额真实不足，
+            // 必然转为 FAILED/INSUFFICIENT_FUNDS，不受随机概率影响（真实业务规则优先于演示用的随机模拟）。
+            if (isInsufficientForValidation(payment, currentStatus, nextStatus)) {
+                applyStatusTransition(payment, currentStatus, PaymentStatus.FAILED,
+                        ErrorCode.INSUFFICIENT_FUNDS.name(), INSUFFICIENT_BALANCE_MESSAGE, payment.getRemark(),
+                        OPERATOR_SYSTEM_AUTO);
+                advancedCount++;
+                continue;
+            }
 
             // 按配置的概率随机判定本次是否模拟失败，而不是一律走向下一个正常状态，
             // 这样可以在演示时同时看到 COMPLETED 与 FAILED 两种真实分支效果。
@@ -265,10 +281,6 @@ public class PaymentServiceImpl implements PaymentService {
                 continue;
             }
 
-            PaymentStatus nextStatus = nextAutoTransitionStatus(currentStatus);
-            if (nextStatus == null) {
-                continue;
-            }
             applyStatusTransition(payment, currentStatus, nextStatus, null, null, payment.getRemark(),
                     OPERATOR_SYSTEM_AUTO);
             advancedCount++;
@@ -331,10 +343,31 @@ public class PaymentServiceImpl implements PaymentService {
                     String.format("不允许从 %s 流转到 %s", currentStatus, targetStatus), HttpStatus.BAD_REQUEST);
         }
 
+        // 3. 余额充足性校验：仅当本次流转是 CREATED -> VALIDATED 时才检查，
+        // 若源账户余额真实不足，实际执行的目标状态强制改为 FAILED/INSUFFICIENT_FUNDS，
+        // 而不是按调用方请求的 VALIDATED 继续（真实余额规则优先于调用方传入的目标状态）。
+        if (isInsufficientForValidation(payment, currentStatus, targetStatus)) {
+            applyStatusTransition(payment, currentStatus, PaymentStatus.FAILED,
+                    ErrorCode.INSUFFICIENT_FUNDS.name(), INSUFFICIENT_BALANCE_MESSAGE, request.getRemark(),
+                    OPERATOR_MANUAL);
+            return toResponse(payment);
+        }
+
         applyStatusTransition(payment, currentStatus, targetStatus,
                 request.getErrorCode(), request.getErrorMessage(), request.getRemark(), OPERATOR_MANUAL);
 
         return toResponse(payment);
+    }
+
+    /**
+     * 判断本次流转是否命中“需要做真实余额校验”的场景（仅 CREATED -> VALIDATED），
+     * 且源账户余额确实不足以支付本次金额。
+     * 该方法只读取余额判断，不做任何扣款，账户余额不会被修改。
+     */
+    private boolean isInsufficientForValidation(Payment payment, PaymentStatus currentStatus,
+            PaymentStatus targetStatus) {
+        return currentStatus == PaymentStatus.CREATED && targetStatus == PaymentStatus.VALIDATED
+                && !paymentValidator.hasSufficientBalance(payment.getFromAccount(), payment.getAmount());
     }
 
     private void applyStatusTransition(Payment payment,

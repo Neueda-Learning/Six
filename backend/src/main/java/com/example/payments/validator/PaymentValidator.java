@@ -10,6 +10,7 @@ import org.springframework.stereotype.Component;
 
 import com.example.payments.config.PaymentProperties;
 import com.example.payments.dto.request.CreatePaymentRequest;
+import com.example.payments.entity.Account;
 import com.example.payments.enums.ErrorCode;
 import com.example.payments.exception.PaymentException;
 import com.example.payments.mapper.AccountMapper;
@@ -112,6 +113,23 @@ public class PaymentValidator {
             throw new PaymentException(ErrorCode.INVALID_ACCOUNT.name(), "目标账户不存在: " + toAccount,
                     HttpStatus.BAD_REQUEST);
         }
+    }
+
+    /**
+     * 余额充足性只读校验：仅在支付状态由 CREATED 流转到 VALIDATED 时调用，
+     * 判断源账户当前余额是否足以支付本次金额。
+     * 该方法只读取余额用于判断，不做任何扣款/冻结等资金变动，账户余额自始至终保持不变。
+     *
+     * @param fromAccount 源账户号
+     * @param amount      本次支付金额
+     * @return true 表示余额充足（大于等于支付金额），false 表示余额不足或账户/余额数据缺失
+     */
+    public boolean hasSufficientBalance(String fromAccount, BigDecimal amount) {
+        Account account = accountMapper.selectById(fromAccount);
+        if (account == null || account.getBalance() == null || amount == null) {
+            return false;
+        }
+        return account.getBalance().compareTo(amount) >= 0;
     }
 }
 

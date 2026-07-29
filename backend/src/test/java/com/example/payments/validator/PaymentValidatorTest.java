@@ -130,4 +130,44 @@ class PaymentValidatorTest {
 
         assertEquals(ErrorCode.INVALID_AMOUNT.name(), ex.getErrorCode());
     }
+
+    // ---------- 余额充足性校验（转账新功能） ----------
+
+    // 账户存在且余额 >= 支付金额，应返回 true
+    @Test
+    void hasSufficientBalance_balanceGreaterOrEqualToAmount_returnsTrue() {
+        Account account = new Account();
+        account.setBalance(new BigDecimal("500.00"));
+        when(accountMapper.selectById("ACC10001")).thenReturn(account);
+
+        assertEquals(true, paymentValidator.hasSufficientBalance("ACC10001", new BigDecimal("500.00")));
+    }
+
+    // 余额小于支付金额，应返回 false
+    @Test
+    void hasSufficientBalance_balanceLessThanAmount_returnsFalse() {
+        Account account = new Account();
+        account.setBalance(new BigDecimal("100.00"));
+        when(accountMapper.selectById("ACC10002")).thenReturn(account);
+
+        assertEquals(false, paymentValidator.hasSufficientBalance("ACC10002", new BigDecimal("8000.00")));
+    }
+
+    // 账户不存在，应返回 false（而不是抛异常）
+    @Test
+    void hasSufficientBalance_accountNotExist_returnsFalse() {
+        when(accountMapper.selectById("ACC99999")).thenReturn(null);
+
+        assertEquals(false, paymentValidator.hasSufficientBalance("ACC99999", new BigDecimal("100.00")));
+    }
+
+    // 账户存在但 balance 字段为 null（如未执行余额初始化脚本），应返回 false 而不是抛 NPE
+    @Test
+    void hasSufficientBalance_balanceFieldNull_returnsFalse() {
+        Account account = new Account();
+        account.setBalance(null);
+        when(accountMapper.selectById("ACC10003")).thenReturn(account);
+
+        assertEquals(false, paymentValidator.hasSufficientBalance("ACC10003", new BigDecimal("1.00")));
+    }
 }

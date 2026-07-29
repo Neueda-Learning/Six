@@ -24,6 +24,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.dao.DuplicateKeyException;
 
 import com.baomidou.mybatisplus.core.conditions.AbstractWrapper;
@@ -265,6 +266,8 @@ class PaymentServiceImplTest {
     void updatePaymentStatus_lowerCaseTargetStatus_parsesAndTransitionsSuccessfully() {
         when(paymentMapper.selectById(1L)).thenReturn(existingPayment(PaymentStatus.CREATED));
         when(paymentStateMachine.canTransition(PaymentStatus.CREATED, PaymentStatus.VALIDATED)).thenReturn(true);
+        // CREATED -> VALIDATED 会触发余额校验，本用例只关心状态解析逻辑，因此固定桩为余额充足
+        when(paymentValidator.hasSufficientBalance("ACC10001", new BigDecimal("100.00"))).thenReturn(true);
 
         UpdatePaymentStatusRequest request = new UpdatePaymentStatusRequest();
         request.setTargetStatus("validated");
@@ -291,6 +294,7 @@ class PaymentServiceImplTest {
     void updatePaymentStatus_optimisticLockConflict_currentlyNotDetected() {
         when(paymentMapper.selectById(1L)).thenReturn(existingPayment(PaymentStatus.CREATED));
         when(paymentStateMachine.canTransition(PaymentStatus.CREATED, PaymentStatus.VALIDATED)).thenReturn(true);
+        when(paymentValidator.hasSufficientBalance("ACC10001", new BigDecimal("100.00"))).thenReturn(true);
         // 模拟版本冲突：updateById 返回受影响行数 0（现有实现完全忽略这个返回值）
         when(paymentMapper.updateById(any(Payment.class))).thenReturn(0);
 
@@ -329,6 +333,60 @@ class PaymentServiceImplTest {
         // 重新查询后拿到最新快照（VALIDATED），再次调用同一接口，应成功流转到 SENT
         PaymentResponse response = paymentService.updatePaymentStatus(1L, request);
         assertEquals("SENT", response.getStatus());
+    }
+
+    // ---------- 余额充足性校验（转账新功能）----------
+
+    // CREATED -> VALIDATED 手动流转时，若源账户余额真实不足，应强制转为 FAILED/INSUFFICIENT_FUNDS，
+    // 而不是按调用方请求的 VALIDATED 继续
+    @Test
+    void updatePaymentStatus_createdToValidated_insufficientBalance_overridesToFailedInsufficientFunds() {
+        when(paymentMapper.selectById(1L)).thenReturn(existingPayment(PaymentStatus.CREATED));
+        when(paymentStateMachine.canTransition(PaymentStatus.CREATED, PaymentStatus.VALIDATED)).thenReturn(true);
+        // applyStatusTransition 内部会对最终实际执行的目标状态（FAILED）再次校验一次状态机合法性
+        when(paymentStateMachine.canTransition(PaymentStatus.CREATED, PaymentStatus.FAILED)).thenReturn(true);
+        when(paymentValidator.hasSufficientBalance("ACC10001", new BigDecimal("100.00"))).thenReturn(false);
+
+        UpdatePaymentStatusRequest request = new UpdatePaymentStatusRequest();
+        request.setTargetStatus("VALIDATED");
+
+        PaymentResponse response = paymentService.updatePaymentStatus(1L, request);
+
+        assertEquals("FAILED", response.getStatus());
+        assertEquals(ErrorCode.INSUFFICIENT_FUNDS.name(), response.getErrorCode());
+    }
+
+    // 自动推进调度：CREATED -> VALIDATED 时若余额不足，无论随机失败概率是多少，都必然转为 FAILED/INSUFFICIENT_FUNDS
+    @Test
+    void autoAdvancePendingPayments_insufficientBalance_forcesFailedRegardlessOfRandomProbability() {
+        Payment payment = existingPayment(PaymentStatus.CREATED);
+        when(paymentMapper.selectList(any())).thenReturn(List.of(payment));
+        when(paymentValidator.hasSufficientBalance("ACC10001", new BigDecimal("100.00"))).thenReturn(false);
+        // applyStatusTransition 内部会对最终实际执行的目标状态（FAILED）再次校验一次状态机合法性
+        when(paymentStateMachine.canTransition(PaymentStatus.CREATED, PaymentStatus.FAILED)).thenReturn(true);
+        // 随机失败概率设为 0（本应“必然不触发随机失败”），验证余额不足这条真实业务规则不受随机概率影响
+        ReflectionTestUtils.setField(paymentService, "autoFailureProbability", 0.0);
+
+        int advancedCount = paymentService.autoAdvancePendingPayments();
+
+        assertEquals(1, advancedCount);
+        assertEquals("FAILED", payment.getStatus());
+        assertEquals(ErrorCode.INSUFFICIENT_FUNDS.name(), payment.getErrorCode());
+    }
+
+    // 自动推进调度：余额充足时，CREATED -> VALIDATED 正常推进，不受余额校验影响
+    @Test
+    void autoAdvancePendingPayments_sufficientBalance_advancesNormally() {
+        Payment payment = existingPayment(PaymentStatus.CREATED);
+        when(paymentMapper.selectList(any())).thenReturn(List.of(payment));
+        when(paymentValidator.hasSufficientBalance("ACC10001", new BigDecimal("100.00"))).thenReturn(true);
+        when(paymentStateMachine.canTransition(PaymentStatus.CREATED, PaymentStatus.VALIDATED)).thenReturn(true);
+        ReflectionTestUtils.setField(paymentService, "autoFailureProbability", 0.0);
+
+        int advancedCount = paymentService.autoAdvancePendingPayments();
+
+        assertEquals(1, advancedCount);
+        assertEquals("VALIDATED", payment.getStatus());
     }
 
     // ---------- 第七章：查询类接口（TC-35~TC-44） ----------
