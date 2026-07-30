@@ -26,6 +26,7 @@
               <el-button
                 link
                 type="primary"
+                class="balance-query-button"
                 :icon="Search"
                 :loading="balanceLoading.from"
                 :disabled="!form.fromAccount"
@@ -47,6 +48,7 @@
               <el-button
                 link
                 type="primary"
+                class="balance-query-button"
                 :icon="Search"
                 :loading="balanceLoading.to"
                 :disabled="!form.toAccount"
@@ -257,7 +259,7 @@ function handleReset() {
 
 .card-title {
   font-size: 16px;
-  font-weight: 600;
+  font-weight: 500;
 }
 
 .create-form {
@@ -276,6 +278,25 @@ function handleReset() {
   color: #6b7280;
   font-size: 13px;
   line-height: 1.4;
+}
+
+.balance-query-button {
+  padding: 8px 14px !important;
+  min-height: 34px;
+  border-radius: 999px;
+  background: rgba(15, 111, 255, 0.10) !important;
+  border: 1px solid rgba(15, 111, 255, 0.14) !important;
+  line-height: 1;
+}
+
+.balance-query-button:hover,
+.balance-query-button:focus-visible {
+  background: rgba(15, 111, 255, 0.16) !important;
+  border-color: rgba(15, 111, 255, 0.26) !important;
+}
+
+.balance-query-button:deep(.el-icon) {
+  margin-right: 4px;
 }
 </style>
 

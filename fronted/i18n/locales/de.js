@@ -20,6 +20,11 @@ export default {
     COMPLETED: 'Abgeschlossen',
     FAILED: 'Fehlgeschlagen'
   },
+  accountStatus: {
+    ACTIVE: 'Aktiv',
+    INACTIVE: 'Inaktiv',
+    FROZEN: 'Gesperrt'
+  },
   list: {
     title: 'Zahlungsliste',
     newPayment: 'Neue Zahlung',

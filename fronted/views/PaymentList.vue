@@ -333,11 +333,12 @@ onUnmounted(stopPolling);
   align-items: center;
   gap: 8px;
   font-size: 16px;
-  font-weight: 600;
+  font-weight: 500;
 }
 
 .title-icon {
   color: var(--color-primary);
+  opacity: 0.88;
 }
 
 .header-actions {
@@ -353,7 +354,7 @@ onUnmounted(stopPolling);
   color: var(--color-primary-dark);
   background: var(--color-primary-light);
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 500;
   padding: 4px 10px;
   border-radius: 999px;
   white-space: nowrap;

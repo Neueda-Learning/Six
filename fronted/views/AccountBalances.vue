@@ -36,7 +36,7 @@
       <el-table-column prop="currency" :label="t('accounts.columns.currency')" width="120" align="center" />
       <el-table-column :label="t('accounts.columns.status')" width="140" align="center">
         <template #default="{ row }">
-          <el-tag :type="statusTagType(row.status)" effect="light">{{ row.status }}</el-tag>
+          <el-tag :type="statusTagType(row.status)" effect="light">{{ accountStatusLabel(row.status) }}</el-tag>
         </template>
       </el-table-column>
       <el-table-column :label="t('accounts.columns.balance')" min-width="180" align="center">
@@ -69,8 +69,9 @@ import { computed, onMounted, reactive, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { RefreshLeft, Search } from '@element-plus/icons-vue';
 import { listAccounts } from '../api/account';
+import { getAccountStatusLabel } from '../utils/accountStatus';
 
-const { t, n } = useI18n();
+const { t, n, te } = useI18n();
 
 const query = reactive({
   keyword: '',
@@ -88,6 +89,10 @@ const pagedAccounts = computed(() => {
 
 function formatBalance(balance, currency) {
   return n(balance, { key: 'currency', currency });
+}
+
+function accountStatusLabel(status) {
+  return getAccountStatusLabel(status, t, te);
 }
 
 function statusTagType(status) {
@@ -151,11 +156,12 @@ onMounted(fetchAccounts);
   align-items: center;
   gap: 8px;
   font-size: 16px;
-  font-weight: 600;
+  font-weight: 500;
 }
 
 .title-icon {
   color: var(--color-primary);
+  opacity: 0.88;
 }
 
 .hint-alert {

@@ -20,6 +20,11 @@ export default {
     COMPLETED: '已完成',
     FAILED: '失败'
   },
+  accountStatus: {
+    ACTIVE: '可用',
+    INACTIVE: '未启用',
+    FROZEN: '冻结'
+  },
   list: {
     title: '支付列表',
     newPayment: '新建支付',
