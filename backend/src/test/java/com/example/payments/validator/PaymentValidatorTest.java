@@ -46,7 +46,7 @@ class PaymentValidatorTest {
 
     // TC-05/06/07/09：金额为 0、负数、达到上限临界值、小数位超过两位，均应抛出 INVALID_AMOUNT
     @ParameterizedTest(name = "amount={0} 应抛出 INVALID_AMOUNT")
-    @ValueSource(strings = {"0", "-10", "1000000", "10.123"})
+    @ValueSource(strings = { "0", "-10", "1000000", "10.123" })
     void validateAmount_invalidValues_throwsInvalidAmount(String amountStr) {
         BigDecimal amount = new BigDecimal(amountStr);
 
@@ -67,11 +67,15 @@ class PaymentValidatorTest {
 
     // TC-08/10：金额刚好小于上限、金额为极小正数，均应通过校验（不抛异常）
     @ParameterizedTest(name = "amount={0} 应通过校验")
-    @ValueSource(strings = {"999999.99", "0.01"})
+    @ValueSource(strings = { "999999.99", "0.01" })
     void validateAmount_validBoundaryValues_passes(String amountStr) {
         BigDecimal amount = new BigDecimal(amountStr);
-        when(accountMapper.selectById("ACC10001")).thenReturn(new Account());
-        when(accountMapper.selectById("ACC20001")).thenReturn(new Account());
+        Account fromAccount = new Account();
+        fromAccount.setCurrency("USD");
+        Account toAccount = new Account();
+        toAccount.setCurrency("USD");
+        when(accountMapper.selectById("ACC10001")).thenReturn(fromAccount);
+        when(accountMapper.selectById("ACC20001")).thenReturn(toAccount);
 
         assertDoesNotThrow(() -> paymentValidator.validate(amount, "USD", "ACC10001", "ACC20001"));
     }
@@ -113,7 +117,9 @@ class PaymentValidatorTest {
     // TC-17：目标账户不存在，应抛出 INVALID_ACCOUNT
     @Test
     void validateAccounts_toAccountNotExist_throwsInvalidAccount() {
-        when(accountMapper.selectById("ACC10001")).thenReturn(new Account());
+        Account fromAccount = new Account();
+        fromAccount.setCurrency("USD");
+        when(accountMapper.selectById("ACC10001")).thenReturn(fromAccount);
         when(accountMapper.selectById("ACC99999")).thenReturn(null);
 
         PaymentException ex = assertThrows(PaymentException.class,
@@ -129,6 +135,36 @@ class PaymentValidatorTest {
                 () -> paymentValidator.validate(BigDecimal.ZERO, "USD", "ACC10001", "ACC10001"));
 
         assertEquals(ErrorCode.INVALID_AMOUNT.name(), ex.getErrorCode());
+    }
+
+    @Test
+    void validateAccounts_differentAccountCurrencies_throwsInvalidCurrency() {
+        Account fromAccount = new Account();
+        fromAccount.setCurrency("USD");
+        Account toAccount = new Account();
+        toAccount.setCurrency("EUR");
+        when(accountMapper.selectById("ACC10001")).thenReturn(fromAccount);
+        when(accountMapper.selectById("ACC20002")).thenReturn(toAccount);
+
+        PaymentException ex = assertThrows(PaymentException.class,
+                () -> paymentValidator.validate(new BigDecimal("100"), "USD", "ACC10001", "ACC20002"));
+
+        assertEquals(ErrorCode.INVALID_CURRENCY.name(), ex.getErrorCode());
+    }
+
+    @Test
+    void validateAccounts_paymentCurrencyMismatchAccountCurrency_throwsInvalidCurrency() {
+        Account fromAccount = new Account();
+        fromAccount.setCurrency("EUR");
+        Account toAccount = new Account();
+        toAccount.setCurrency("EUR");
+        when(accountMapper.selectById("ACC10002")).thenReturn(fromAccount);
+        when(accountMapper.selectById("ACC20002")).thenReturn(toAccount);
+
+        PaymentException ex = assertThrows(PaymentException.class,
+                () -> paymentValidator.validate(new BigDecimal("100"), "USD", "ACC10002", "ACC20002"));
+
+        assertEquals(ErrorCode.INVALID_CURRENCY.name(), ex.getErrorCode());
     }
 
     // ---------- 余额充足性校验（转账新功能） ----------

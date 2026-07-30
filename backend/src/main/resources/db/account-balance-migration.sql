@@ -1,9 +1,9 @@
--- 该文件用于给已初始化的旧版 accounts 表补充“账户余额”字段，供转账时的余额充足性校验使用。
+-- 该文件用于给已初始化的旧版 accounts 表补充“账户余额”字段，供转账校验与真实余额变更使用。
 -- 新环境直接执行 schema.sql + data.sql 即可；仅旧库需要单独执行本脚本：
 --   mysql -u root -p payments_db < backend/src/main/resources/db/account-balance-migration.sql
 --
 -- 说明：
--- 1. balance 仅用于“余额是否充足”的只读判断，不涉及扣款/回滚等资金变动逻辑，账户余额在整个支付生命周期内保持不变。
+-- 1. balance 在 CREATED -> VALIDATED 阶段用于余额充足性判断，在 SENT -> COMPLETED 阶段会真实执行扣款与入账。
 -- 2. 本脚本应支持重复执行，不覆盖已有非零余额。
 
 USE payments_db;
@@ -18,7 +18,7 @@ SET @add_balance_column = (
               AND COLUMN_NAME = 'balance'
         ),
         'SELECT 1',
-        "ALTER TABLE accounts ADD COLUMN balance DECIMAL(18,2) NOT NULL DEFAULT 100000.00 COMMENT '账户可用余额，仅用于转账时的余额充足性只读校验，不参与真实扣款'"
+        "ALTER TABLE accounts ADD COLUMN balance DECIMAL(18,2) NOT NULL DEFAULT 100000.00 COMMENT '账户可用余额：校验阶段用于判断，支付完成时会真实扣减或增加'"
     )
 );
 

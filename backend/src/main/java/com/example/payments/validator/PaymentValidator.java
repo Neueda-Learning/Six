@@ -64,7 +64,26 @@ public class PaymentValidator {
     public void validate(BigDecimal amount, String currency, String fromAccount, String toAccount) {
         validateAmount(amount);
         validateCurrency(currency);
-        validateAccounts(fromAccount, toAccount);
+        validateAccounts(fromAccount, toAccount, currency);
+    }
+
+    /**
+     * 校验一笔转账涉及的源账户、目标账户与支付币种是否一致。
+     * 该方法可用于创建支付时的准入校验，也可用于旧数据或异常数据在真正扣款前的兜底保护。
+     */
+    public void validateTransferCurrency(String currency, String fromAccount, String toAccount) {
+        Account fromAccountEntity = accountMapper.selectById(fromAccount);
+        if (fromAccountEntity == null) {
+            throw new PaymentException(ErrorCode.INVALID_ACCOUNT.name(), "源账户不存在: " + fromAccount,
+                    HttpStatus.BAD_REQUEST);
+        }
+        Account toAccountEntity = accountMapper.selectById(toAccount);
+        if (toAccountEntity == null) {
+            throw new PaymentException(ErrorCode.INVALID_ACCOUNT.name(), "目标账户不存在: " + toAccount,
+                    HttpStatus.BAD_REQUEST);
+        }
+
+        validateSameCurrency(currency, fromAccountEntity, toAccountEntity);
     }
 
     /**
@@ -100,25 +119,45 @@ public class PaymentValidator {
     /**
      * 账户校验：源账户与目标账户不能相同，且两者都必须在账户模拟数据（accounts 表）中真实存在。
      */
-    private void validateAccounts(String fromAccount, String toAccount) {
+    private void validateAccounts(String fromAccount, String toAccount, String currency) {
         if (fromAccount != null && fromAccount.equals(toAccount)) {
             throw new PaymentException(ErrorCode.INVALID_ACCOUNT.name(), "源账户与目标账户不能相同",
                     HttpStatus.BAD_REQUEST);
         }
-        if (accountMapper.selectById(fromAccount) == null) {
+        Account fromAccountEntity = accountMapper.selectById(fromAccount);
+        if (fromAccountEntity == null) {
             throw new PaymentException(ErrorCode.INVALID_ACCOUNT.name(), "源账户不存在: " + fromAccount,
                     HttpStatus.BAD_REQUEST);
         }
-        if (accountMapper.selectById(toAccount) == null) {
+        Account toAccountEntity = accountMapper.selectById(toAccount);
+        if (toAccountEntity == null) {
             throw new PaymentException(ErrorCode.INVALID_ACCOUNT.name(), "目标账户不存在: " + toAccount,
                     HttpStatus.BAD_REQUEST);
+        }
+
+        validateSameCurrency(currency, fromAccountEntity, toAccountEntity);
+    }
+
+    private void validateSameCurrency(String currency, Account fromAccountEntity, Account toAccountEntity) {
+        String normalizedCurrency = currency == null ? null : currency.toUpperCase(Locale.ROOT);
+        String fromCurrency = fromAccountEntity.getCurrency() == null ? null
+                : fromAccountEntity.getCurrency().toUpperCase(Locale.ROOT);
+        String toCurrency = toAccountEntity.getCurrency() == null ? null
+                : toAccountEntity.getCurrency().toUpperCase(Locale.ROOT);
+        if (normalizedCurrency == null
+                || fromCurrency == null
+                || toCurrency == null
+                || !normalizedCurrency.equals(fromCurrency)
+                || !normalizedCurrency.equals(toCurrency)) {
+            throw new PaymentException(ErrorCode.INVALID_CURRENCY.name(),
+                    "源账户、目标账户与支付币种必须一致，不支持跨币种转账", HttpStatus.BAD_REQUEST);
         }
     }
 
     /**
      * 余额充足性只读校验：仅在支付状态由 CREATED 流转到 VALIDATED 时调用，
      * 判断源账户当前余额是否足以支付本次金额。
-     * 该方法只读取余额用于判断，不做任何扣款/冻结等资金变动，账户余额自始至终保持不变。
+     * 该方法只做准入判断；真正的扣款/入账在支付最终流转到 COMPLETED 时执行。
      *
      * @param fromAccount 源账户号
      * @param amount      本次支付金额
@@ -132,4 +171,3 @@ public class PaymentValidator {
         return account.getBalance().compareTo(amount) >= 0;
     }
 }
-

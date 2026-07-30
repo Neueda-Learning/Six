@@ -29,8 +29,7 @@ public class Account {
   private String ownerName;
   private String currency;
   private String status;
-  // 账户可用余额：仅用于转账时的余额充足性只读校验（判断 fromAccount 余额是否 >= 支付金额），
-  // 不涉及扣款、不涉及并发扣减，余额自始至终不会被修改。对应 db/account-balance-migration.sql 新增的 balance 列。
+  // 账户可用余额：创建/校验阶段用于余额充足性判断，支付真正 COMPLETED 时会执行扣款与入账。
   private BigDecimal balance;
   private LocalDateTime createdAt;
 }

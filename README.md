@@ -139,9 +139,11 @@ npm run dev
 - `/`：支付列表（筛选、分页、跳转详情）
 - `/payments/create`：创建支付
 - `/payments/:id`：支付详情 + 状态历史时间线
+- `/accounts/balances`：账户余额独立页面
 
 ## 核心接口（契约）
 
+- GET `/api/accounts/{accountNo}/balance`
 - POST `/api/payments`
 - GET `/api/payments/{id}`
 - GET `/api/payments/{id}/history`

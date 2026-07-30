@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -40,6 +41,7 @@ import com.example.payments.entity.PaymentStatusHistory;
 import com.example.payments.enums.ErrorCode;
 import com.example.payments.enums.PaymentStatus;
 import com.example.payments.exception.PaymentException;
+import com.example.payments.mapper.AccountMapper;
 import com.example.payments.mapper.PaymentMapper;
 import com.example.payments.mapper.PaymentStatusHistoryMapper;
 import com.example.payments.statemachine.PaymentStateMachine;
@@ -62,6 +64,9 @@ class PaymentServiceImplTest {
     private PaymentStatusHistoryMapper paymentStatusHistoryMapper;
 
     @Mock
+    private AccountMapper accountMapper;
+
+    @Mock
     private PaymentValidator paymentValidator;
 
     @Mock
@@ -71,8 +76,10 @@ class PaymentServiceImplTest {
 
     @BeforeEach
     void setUp() {
-        paymentService = new PaymentServiceImpl(paymentMapper, paymentStatusHistoryMapper, paymentValidator,
+        paymentService = new PaymentServiceImpl(paymentMapper, paymentStatusHistoryMapper, accountMapper,
+                paymentValidator,
                 paymentStateMachine);
+        lenient().when(paymentMapper.updateById(any(Payment.class))).thenReturn(1);
     }
 
     private Payment existingPayment(PaymentStatus status) {
@@ -139,6 +146,9 @@ class PaymentServiceImplTest {
         when(paymentStateMachine.canTransition(PaymentStatus.CREATED, PaymentStatus.VALIDATED)).thenReturn(true);
         when(paymentStateMachine.canTransition(PaymentStatus.VALIDATED, PaymentStatus.SENT)).thenReturn(true);
         when(paymentStateMachine.canTransition(PaymentStatus.SENT, PaymentStatus.COMPLETED)).thenReturn(true);
+        when(paymentValidator.hasSufficientBalance("ACC10001", new BigDecimal("100.00"))).thenReturn(true);
+        when(accountMapper.debitBalance("ACC10001", new BigDecimal("100.00"))).thenReturn(1);
+        when(accountMapper.creditBalance("ACC20001", new BigDecimal("100.00"))).thenReturn(1);
 
         UpdatePaymentStatusRequest toValidated = new UpdatePaymentStatusRequest();
         toValidated.setTargetStatus("VALIDATED");
@@ -159,7 +169,7 @@ class PaymentServiceImplTest {
 
     // TC-03：三种受支持币种（USD/EUR/GBP）均应创建成功
     @ParameterizedTest(name = "currency={0} 应创建成功")
-    @ValueSource(strings = {"USD", "EUR", "GBP"})
+    @ValueSource(strings = { "USD", "EUR", "GBP" })
     void createPayment_supportedCurrencies_allSucceed(String currency) {
         when(paymentMapper.selectOne(any())).thenReturn(null);
 
@@ -182,7 +192,8 @@ class PaymentServiceImplTest {
         assertEquals("USD", response.getCurrency());
     }
 
-    // ---------- 第五章：幂等性（TC-19~TC-21，TC-22/23 见 CreatePaymentRequestValidationTest） ----------
+    // ---------- 第五章：幂等性（TC-19~TC-21，TC-22/23 见 CreatePaymentRequestValidationTest）
+    // ----------
 
     // TC-19：相同 idempotencyKey 重复提交，应直接返回已存在的记录，不再执行 insert
     @Test
@@ -285,7 +296,8 @@ class PaymentServiceImplTest {
      * TC-45：模拟乐观锁版本冲突场景 —— MyBatis-Plus 乐观锁插件在 UPDATE 语句的 WHERE version=? 未命中时，
      * updateById 会返回受影响行数 0，但不会抛出异常。
      *
-     * ⚠️ 已知缺口（见 test-cases.md 待确认事项）：当前 applyStatusTransition 完全没有检查 updateById 的返回值，
+     * ⚠️ 已知缺口（见 test-cases.md 待确认事项）：当前 applyStatusTransition 完全没有检查 updateById
+     * 的返回值，
      * 因此即使发生版本冲突，服务层也会“当作成功”继续写历史并返回更新后的响应。
      * 本测试如实记录当前的真实行为，而不是臆造一个“应该抛异常”的期望；
      * 后续若修复该缺口（例如根据返回值抛出 PROCESSING_ERROR 或专门的版本冲突错误码），需要同步更新本测试。
@@ -295,16 +307,17 @@ class PaymentServiceImplTest {
         when(paymentMapper.selectById(1L)).thenReturn(existingPayment(PaymentStatus.CREATED));
         when(paymentStateMachine.canTransition(PaymentStatus.CREATED, PaymentStatus.VALIDATED)).thenReturn(true);
         when(paymentValidator.hasSufficientBalance("ACC10001", new BigDecimal("100.00"))).thenReturn(true);
-        // 模拟版本冲突：updateById 返回受影响行数 0（现有实现完全忽略这个返回值）
+        // 模拟版本冲突：updateById 返回受影响行数 0，应转换为并发冲突错误而不是继续写历史
         when(paymentMapper.updateById(any(Payment.class))).thenReturn(0);
 
         UpdatePaymentStatusRequest request = new UpdatePaymentStatusRequest();
         request.setTargetStatus("VALIDATED");
 
-        PaymentResponse response = assertDoesNotThrow(() -> paymentService.updatePaymentStatus(1L, request));
+        PaymentException ex = assertThrows(PaymentException.class,
+                () -> paymentService.updatePaymentStatus(1L, request));
 
-        assertEquals("VALIDATED", response.getStatus());
-        verify(paymentStatusHistoryMapper).insert(any(PaymentStatusHistory.class));
+        assertEquals(ErrorCode.PROCESSING_ERROR.name(), ex.getErrorCode());
+        verify(paymentStatusHistoryMapper, never()).insert(any(PaymentStatusHistory.class));
     }
 
     /**
@@ -356,7 +369,8 @@ class PaymentServiceImplTest {
         assertEquals(ErrorCode.INSUFFICIENT_FUNDS.name(), response.getErrorCode());
     }
 
-    // 自动推进调度：CREATED -> VALIDATED 时若余额不足，无论随机失败概率是多少，都必然转为 FAILED/INSUFFICIENT_FUNDS
+    // 自动推进调度：CREATED -> VALIDATED 时若余额不足，无论随机失败概率是多少，都必然转为
+    // FAILED/INSUFFICIENT_FUNDS
     @Test
     void autoAdvancePendingPayments_insufficientBalance_forcesFailedRegardlessOfRandomProbability() {
         Payment payment = existingPayment(PaymentStatus.CREATED);
@@ -387,6 +401,59 @@ class PaymentServiceImplTest {
 
         assertEquals(1, advancedCount);
         assertEquals("VALIDATED", payment.getStatus());
+    }
+
+    @Test
+    void updatePaymentStatus_sentToCompleted_transfersBalancesAndCompletes() {
+        Payment payment = existingPayment(PaymentStatus.SENT);
+        when(paymentMapper.selectById(1L)).thenReturn(payment);
+        when(paymentStateMachine.canTransition(PaymentStatus.SENT, PaymentStatus.COMPLETED)).thenReturn(true);
+        when(accountMapper.debitBalance("ACC10001", new BigDecimal("100.00"))).thenReturn(1);
+        when(accountMapper.creditBalance("ACC20001", new BigDecimal("100.00"))).thenReturn(1);
+
+        UpdatePaymentStatusRequest request = new UpdatePaymentStatusRequest();
+        request.setTargetStatus("COMPLETED");
+
+        PaymentResponse response = paymentService.updatePaymentStatus(1L, request);
+
+        assertEquals("COMPLETED", response.getStatus());
+        verify(accountMapper).debitBalance("ACC10001", new BigDecimal("100.00"));
+        verify(accountMapper).creditBalance("ACC20001", new BigDecimal("100.00"));
+    }
+
+    @Test
+    void updatePaymentStatus_sentToCompleted_whenDebitFails_throwsInsufficientFunds() {
+        Payment payment = existingPayment(PaymentStatus.SENT);
+        when(paymentMapper.selectById(1L)).thenReturn(payment);
+        when(paymentStateMachine.canTransition(PaymentStatus.SENT, PaymentStatus.COMPLETED)).thenReturn(true);
+        when(accountMapper.debitBalance("ACC10001", new BigDecimal("100.00"))).thenReturn(0);
+
+        UpdatePaymentStatusRequest request = new UpdatePaymentStatusRequest();
+        request.setTargetStatus("COMPLETED");
+
+        PaymentException ex = assertThrows(PaymentException.class,
+                () -> paymentService.updatePaymentStatus(1L, request));
+
+        assertEquals(ErrorCode.INSUFFICIENT_FUNDS.name(), ex.getErrorCode());
+        verify(accountMapper, never()).creditBalance(any(), any());
+        verify(paymentStatusHistoryMapper, never()).insert(any(PaymentStatusHistory.class));
+    }
+
+    @Test
+    void autoAdvancePendingPayments_sentToCompleted_transfersBalances() {
+        Payment payment = existingPayment(PaymentStatus.SENT);
+        when(paymentMapper.selectList(any())).thenReturn(List.of(payment));
+        when(paymentStateMachine.canTransition(PaymentStatus.SENT, PaymentStatus.COMPLETED)).thenReturn(true);
+        when(accountMapper.debitBalance("ACC10001", new BigDecimal("100.00"))).thenReturn(1);
+        when(accountMapper.creditBalance("ACC20001", new BigDecimal("100.00"))).thenReturn(1);
+        ReflectionTestUtils.setField(paymentService, "autoFailureProbability", 0.0);
+
+        int advancedCount = paymentService.autoAdvancePendingPayments();
+
+        assertEquals(1, advancedCount);
+        assertEquals("COMPLETED", payment.getStatus());
+        verify(accountMapper).debitBalance("ACC10001", new BigDecimal("100.00"));
+        verify(accountMapper).creditBalance("ACC20001", new BigDecimal("100.00"));
     }
 
     // ---------- 第七章：查询类接口（TC-35~TC-44） ----------

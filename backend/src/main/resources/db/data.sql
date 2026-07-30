@@ -15,12 +15,12 @@ INSERT INTO accounts (account_no, owner_name, currency, status, balance, created
 INSERT INTO payments
 (id, idempotency_key, from_account, to_account, amount, currency, status, error_code, error_message, remark, version, created_at, updated_at)
 VALUES
-(1, 'seed-happy-completed-001', 'ACC10001', 'ACC20002', 1200.50, 'USD', 'COMPLETED', NULL, NULL, 'invoice-2026-07-seed-01', 3, '2026-07-20 09:00:00', '2026-07-20 09:03:00'),
-(2, 'seed-in-flight-sent-002', 'ACC10002', 'ACC20003', 500.00, 'EUR', 'SENT', NULL, NULL, 'invoice-2026-07-seed-02', 2, '2026-07-21 10:00:00', '2026-07-21 10:02:00'),
-(3, 'seed-in-flight-validated-003', 'ACC10003', 'ACC20001', 99.99, 'GBP', 'VALIDATED', NULL, NULL, 'invoice-2026-07-seed-03', 1, '2026-07-22 11:00:00', '2026-07-22 11:01:00'),
-(4, 'seed-in-flight-created-004', 'ACC10001', 'ACC20003', 250.00, 'USD', 'CREATED', NULL, NULL, 'invoice-2026-07-seed-04', 0, '2026-07-23 12:00:00', '2026-07-23 12:00:00'),
-(5, 'seed-failed-validation-005', 'ACC10002', 'ACC20002', 8000.00, 'USD', 'FAILED', 'INSUFFICIENT_FUNDS', 'mock insufficient balance in from_account', 'invoice-2026-07-seed-05', 1, '2026-07-24 13:00:00', '2026-07-24 13:01:00'),
-(6, 'seed-failed-network-006', 'ACC10003', 'ACC20001', 750.00, 'EUR', 'FAILED', 'NETWORK_ERROR', 'mock network timeout after max retries', 'invoice-2026-07-seed-06', 3, '2026-07-25 14:00:00', '2026-07-25 14:03:00');
+(1, 'seed-happy-completed-001', 'ACC10001', 'ACC20001', 1200.50, 'USD', 'COMPLETED', NULL, NULL, 'invoice-2026-07-seed-01', 3, '2026-07-20 09:00:00', '2026-07-20 09:03:00'),
+(2, 'seed-in-flight-sent-002', 'ACC10002', 'ACC20002', 500.00, 'EUR', 'SENT', NULL, NULL, 'invoice-2026-07-seed-02', 2, '2026-07-21 10:00:00', '2026-07-21 10:02:00'),
+(3, 'seed-in-flight-validated-003', 'ACC10003', 'ACC20003', 99.99, 'GBP', 'VALIDATED', NULL, NULL, 'invoice-2026-07-seed-03', 1, '2026-07-22 11:00:00', '2026-07-22 11:01:00'),
+(4, 'seed-in-flight-created-004', 'ACC10001', 'ACC20001', 250.00, 'USD', 'CREATED', NULL, NULL, 'invoice-2026-07-seed-04', 0, '2026-07-23 12:00:00', '2026-07-23 12:00:00'),
+(5, 'seed-failed-validation-005', 'ACC10002', 'ACC20002', 8000.00, 'EUR', 'FAILED', 'INSUFFICIENT_FUNDS', 'mock insufficient balance in from_account', 'invoice-2026-07-seed-05', 1, '2026-07-24 13:00:00', '2026-07-24 13:01:00'),
+(6, 'seed-failed-network-006', 'ACC10003', 'ACC20003', 750.00, 'GBP', 'FAILED', 'NETWORK_ERROR', 'mock network timeout after max retries', 'invoice-2026-07-seed-06', 3, '2026-07-25 14:00:00', '2026-07-25 14:03:00');
 
 -- 支付状态历史模拟数据（audit trail）：与上方 payments 的每条记录状态流转一一对应
 INSERT INTO payment_status_history

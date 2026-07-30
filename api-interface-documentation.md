@@ -170,7 +170,78 @@
 
 ---
 
-### 5.2 查询支付详情
+### 5.2 查询账户列表
+
+- **Method / Path**：`GET /api/accounts`
+- **使用页面**：账户余额独立页面
+
+**Query 参数**
+
+| 参数 | 类型 | 必填 | 说明 |
+|---|---|---|---|
+| keyword | string | 否 | 按账户号或户主名称模糊搜索 |
+
+**成功响应**
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "accountNo": "ACC10001",
+      "ownerName": "Alice Zhang",
+      "currency": "USD",
+      "status": "ACTIVE",
+      "balance": 99988.89
+    },
+    {
+      "accountNo": "ACC20001",
+      "ownerName": "David Li",
+      "currency": "USD",
+      "status": "ACTIVE",
+      "balance": 100011.11
+    }
+  ],
+  "errorCode": null,
+  "message": "OK"
+}
+```
+
+---
+
+### 5.3 查询账户余额
+
+- **Method / Path**：`GET /api/accounts/{accountNo}/balance`
+- **使用场景**：余额查询、转账结果核对、支付完成后的账户对账
+
+**路径参数**
+
+| 参数 | 类型 | 说明 |
+|---|---|---|
+| accountNo | string | 账户号，如 `ACC10001` |
+
+**成功响应**
+
+```json
+{
+  "success": true,
+  "data": {
+    "accountNo": "ACC10001",
+    "ownerName": "Alice Zhang",
+    "currency": "USD",
+    "status": "ACTIVE",
+    "balance": 99988.89
+  },
+  "errorCode": null,
+  "message": "OK"
+}
+```
+
+**失败场景**：`INVALID_ACCOUNT`（HTTP 404）。
+
+---
+
+### 5.4 查询支付详情
 
 - **Method / Path**：`GET /api/payments/{id}`
 - **使用页面**：`PaymentDetail.vue`
@@ -209,7 +280,7 @@
 
 ---
 
-### 5.3 查询支付状态历史
+### 5.5 查询支付状态历史
 
 - **Method / Path**：`GET /api/payments/{id}/history`
 - **使用页面**：`PaymentDetail.vue`（时间线展示）
@@ -252,7 +323,7 @@
 
 ---
 
-### 5.4 支付列表分页与筛选
+### 5.6 支付列表分页与筛选
 
 - **Method / Path**：`GET /api/payments`
 - **使用页面**：`PaymentList.vue`

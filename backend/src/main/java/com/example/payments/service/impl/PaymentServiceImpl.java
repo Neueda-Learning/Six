@@ -28,6 +28,7 @@ import com.example.payments.entity.PaymentStatusHistory;
 import com.example.payments.enums.ErrorCode;
 import com.example.payments.enums.PaymentStatus;
 import com.example.payments.exception.PaymentException;
+import com.example.payments.mapper.AccountMapper;
 import com.example.payments.mapper.PaymentMapper;
 import com.example.payments.mapper.PaymentStatusHistoryMapper;
 import com.example.payments.service.PaymentService;
@@ -64,6 +65,12 @@ public class PaymentServiceImpl implements PaymentService {
     /** 余额不足时写入 errorMessage 的固定描述，CREATED -> VALIDATED 真实余额校验失败时使用 */
     private static final String INSUFFICIENT_BALANCE_MESSAGE = "源账户余额不足，无法完成本次支付校验";
 
+    /** 状态推进到 COMPLETED 时，源账户扣款或目标账户入账失败时写入的错误描述 */
+    private static final String BALANCE_TRANSFER_FAILED_MESSAGE = "账户余额更新失败，支付无法完成";
+
+    /** 并发下状态更新版本未命中时的统一错误描述 */
+    private static final String OPTIMISTIC_LOCK_CONFLICT_MESSAGE = "支付状态已被其他请求更新，请刷新后重试";
+
     /** 审计历史记录中，系统自动触发（创建支付时的初始状态）的操作来源标识 */
     private static final String OPERATOR_SYSTEM = "SYSTEM";
 
@@ -78,6 +85,7 @@ public class PaymentServiceImpl implements PaymentService {
 
     private final PaymentMapper paymentMapper;
     private final PaymentStatusHistoryMapper paymentStatusHistoryMapper;
+    private final AccountMapper accountMapper;
     private final PaymentValidator paymentValidator;
     private final PaymentStateMachine paymentStateMachine;
 
@@ -92,10 +100,12 @@ public class PaymentServiceImpl implements PaymentService {
 
     public PaymentServiceImpl(PaymentMapper paymentMapper,
             PaymentStatusHistoryMapper paymentStatusHistoryMapper,
+            AccountMapper accountMapper,
             PaymentValidator paymentValidator,
             PaymentStateMachine paymentStateMachine) {
         this.paymentMapper = paymentMapper;
         this.paymentStatusHistoryMapper = paymentStatusHistoryMapper;
+        this.accountMapper = accountMapper;
         this.paymentValidator = paymentValidator;
         this.paymentStateMachine = paymentStateMachine;
     }
@@ -362,7 +372,7 @@ public class PaymentServiceImpl implements PaymentService {
     /**
      * 判断本次流转是否命中“需要做真实余额校验”的场景（仅 CREATED -> VALIDATED），
      * 且源账户余额确实不足以支付本次金额。
-     * 该方法只读取余额判断，不做任何扣款，账户余额不会被修改。
+     * 该方法只负责准入判断；真正的余额扣减和入账会在 SENT -> COMPLETED 时执行。
      */
     private boolean isInsufficientForValidation(Payment payment, PaymentStatus currentStatus,
             PaymentStatus targetStatus) {
@@ -382,6 +392,10 @@ public class PaymentServiceImpl implements PaymentService {
                     String.format("不允许从 %s 流转到 %s", currentStatus, targetStatus), HttpStatus.BAD_REQUEST);
         }
 
+        if (currentStatus == PaymentStatus.SENT && targetStatus == PaymentStatus.COMPLETED) {
+            applyBalanceTransfer(payment);
+        }
+
         LocalDateTime now = LocalDateTime.now();
         payment.setStatus(targetStatus.name());
         payment.setErrorCode(errorCode);
@@ -390,7 +404,11 @@ public class PaymentServiceImpl implements PaymentService {
             payment.setRemark(remark);
         }
         payment.setUpdatedAt(now);
-        paymentMapper.updateById(payment);
+        int updatedRows = paymentMapper.updateById(payment);
+        if (updatedRows != 1) {
+            throw new PaymentException(ErrorCode.PROCESSING_ERROR.name(), OPTIMISTIC_LOCK_CONFLICT_MESSAGE,
+                    HttpStatus.CONFLICT);
+        }
 
         PaymentStatusHistory history = new PaymentStatusHistory();
         history.setPaymentId(payment.getId());
@@ -402,6 +420,23 @@ public class PaymentServiceImpl implements PaymentService {
         history.setOperator(operator);
         history.setCreatedAt(now);
         paymentStatusHistoryMapper.insert(history);
+    }
+
+    private void applyBalanceTransfer(Payment payment) {
+        paymentValidator.validateTransferCurrency(payment.getCurrency(), payment.getFromAccount(),
+                payment.getToAccount());
+
+        int debitedRows = accountMapper.debitBalance(payment.getFromAccount(), payment.getAmount());
+        if (debitedRows != 1) {
+            throw new PaymentException(ErrorCode.INSUFFICIENT_FUNDS.name(), INSUFFICIENT_BALANCE_MESSAGE,
+                    HttpStatus.BAD_REQUEST);
+        }
+
+        int creditedRows = accountMapper.creditBalance(payment.getToAccount(), payment.getAmount());
+        if (creditedRows != 1) {
+            throw new PaymentException(ErrorCode.PROCESSING_ERROR.name(), BALANCE_TRANSFER_FAILED_MESSAGE,
+                    HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
     private PaymentStatus nextAutoTransitionStatus(PaymentStatus currentStatus) {

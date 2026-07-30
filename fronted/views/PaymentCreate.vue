@@ -22,12 +22,42 @@
           <!-- 源账户：必须与目标账户不同，且需在系统种子数据中真实存在（后端校验） -->
           <el-form-item :label="t('create.fromAccount')" prop="fromAccount">
             <el-input v-model="form.fromAccount" :placeholder="t('create.fromAccountPlaceholder')" :prefix-icon="User" />
+            <div class="account-balance-row">
+              <el-button
+                link
+                type="primary"
+                :icon="Search"
+                :loading="balanceLoading.from"
+                :disabled="!form.fromAccount"
+                @click="queryAccountBalance('from')"
+              >
+                {{ t('create.checkBalance') }}
+              </el-button>
+              <span v-if="accountSnapshots.from" class="account-balance-text">
+                {{ formatAccountSnapshot(accountSnapshots.from) }}
+              </span>
+            </div>
           </el-form-item>
         </el-col>
         <el-col :span="12">
           <!-- 目标账户 -->
           <el-form-item :label="t('create.toAccount')" prop="toAccount">
             <el-input v-model="form.toAccount" :placeholder="t('create.toAccountPlaceholder')" :prefix-icon="User" />
+            <div class="account-balance-row">
+              <el-button
+                link
+                type="primary"
+                :icon="Search"
+                :loading="balanceLoading.to"
+                :disabled="!form.toAccount"
+                @click="queryAccountBalance('to')"
+              >
+                {{ t('create.checkBalance') }}
+              </el-button>
+              <span v-if="accountSnapshots.to" class="account-balance-text">
+                {{ formatAccountSnapshot(accountSnapshots.to) }}
+              </span>
+            </div>
           </el-form-item>
         </el-col>
       </el-row>
@@ -86,16 +116,19 @@ import { computed, reactive, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import { ElMessage } from 'element-plus';
-import { CirclePlus, User, RefreshLeft, Check } from '@element-plus/icons-vue';
+import { CirclePlus, User, RefreshLeft, Check, Search } from '@element-plus/icons-vue';
+import { getAccountBalance } from '../api/account';
 import { createPayment } from '../api/payment';
 
 const router = useRouter();
-const { t } = useI18n();
+const { t, n } = useI18n();
 
 // 表单引用，用于触发 Element Plus 内置的字段校验
 const formRef = ref(null);
 // 提交中状态，控制按钮 loading，避免重复点击导致重复提交
 const submitting = ref(false);
+const balanceLoading = reactive({ from: false, to: false });
+const accountSnapshots = reactive({ from: null, to: null });
 
 // 货币白名单：与后端 ErrorCode.INVALID_CURRENCY 校验规则保持一致
 const currencyOptions = ['USD', 'EUR', 'GBP'];
@@ -131,6 +164,27 @@ function validateToAccount(rule, value, callback) {
     callback(new Error(t('create.validation.toDifferent')));
   } else {
     callback();
+  }
+}
+
+function formatAccountSnapshot(snapshot) {
+  return `${snapshot.ownerName} · ${n(snapshot.balance, { key: 'currency', currency: snapshot.currency })}`;
+}
+
+async function queryAccountBalance(role) {
+  const accountNo = role === 'from' ? form.fromAccount : form.toAccount;
+  if (!accountNo) {
+    return;
+  }
+
+  balanceLoading[role] = true;
+  try {
+    const res = await getAccountBalance(accountNo.trim());
+    accountSnapshots[role] = res.data;
+  } catch (error) {
+    accountSnapshots[role] = null;
+  } finally {
+    balanceLoading[role] = false;
   }
 }
 
@@ -173,6 +227,8 @@ async function handleSubmit() {
 function handleReset() {
   formRef.value.resetFields();
   form.idempotencyKey = generateUuid();
+  accountSnapshots.from = null;
+  accountSnapshots.to = null;
 }
 </script>
 
@@ -206,6 +262,20 @@ function handleReset() {
 
 .create-form {
   margin-top: 8px;
+}
+
+.account-balance-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 8px;
+  min-height: 24px;
+}
+
+.account-balance-text {
+  color: #6b7280;
+  font-size: 13px;
+  line-height: 1.4;
 }
 </style>
 

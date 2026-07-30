@@ -31,6 +31,12 @@
           <el-descriptions-item :label="t('detail.toAccount')">{{ payment.toAccount }}</el-descriptions-item>
           <el-descriptions-item :label="t('detail.amount')">{{ formatAmount(payment.amount, payment.currency) }}</el-descriptions-item>
           <el-descriptions-item :label="t('detail.currency')">{{ payment.currency }}</el-descriptions-item>
+          <el-descriptions-item :label="t('detail.fromAccountBalance')">
+            {{ formatBalanceSnapshot(accountBalances.from) }}
+          </el-descriptions-item>
+          <el-descriptions-item :label="t('detail.toAccountBalance')">
+            {{ formatBalanceSnapshot(accountBalances.to) }}
+          </el-descriptions-item>
           <el-descriptions-item :label="t('detail.remark')" :span="2">{{ payment.remark || '-' }}</el-descriptions-item>
           <el-descriptions-item :label="t('detail.createdAt')">{{ formatDateTime(payment.createdAt) }}</el-descriptions-item>
           <el-descriptions-item :label="t('detail.updatedAt')">{{ formatDateTime(payment.updatedAt) }}</el-descriptions-item>
@@ -85,6 +91,7 @@
 import { onMounted, onUnmounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
+import { getAccountBalance } from '../api/account';
 import { getPaymentById, getPaymentHistory } from '../api/payment';
 import { formatDateTime } from '../utils/datetime';
 import { Clock } from '@element-plus/icons-vue';
@@ -107,12 +114,20 @@ const history = ref([]);
 const loading = ref(false);
 const refreshing = ref(false);
 const isPolling = ref(false);
+const accountBalances = ref({ from: null, to: null });
 
 let pollingTimer = null;
 
 // 按支付自己的币种格式化金额，与列表页 formatAmount 逻辑保持一致
 function formatAmount(amount, currency) {
   return n(amount, { key: 'currency', currency });
+}
+
+function formatBalanceSnapshot(snapshot) {
+  if (!snapshot) {
+    return '-';
+  }
+  return `${snapshot.ownerName} · ${n(snapshot.balance, { key: 'currency', currency: snapshot.currency })}`;
 }
 
 /**
@@ -177,6 +192,7 @@ async function fetchDetail(options = {}) {
     ]);
     payment.value = detailRes.data;
     history.value = historyRes.data;
+    await fetchAccountBalances(detailRes.data);
     syncPolling();
   } catch (error) {
     // 错误提示（含 PAYMENT_NOT_FOUND 等）已由 http.js 拦截器统一处理
@@ -186,6 +202,26 @@ async function fetchDetail(options = {}) {
     } else {
       loading.value = false;
     }
+  }
+}
+
+async function fetchAccountBalances(detail) {
+  if (!detail) {
+    accountBalances.value = { from: null, to: null };
+    return;
+  }
+
+  try {
+    const [fromRes, toRes] = await Promise.all([
+      getAccountBalance(detail.fromAccount),
+      getAccountBalance(detail.toAccount)
+    ]);
+    accountBalances.value = {
+      from: fromRes.data,
+      to: toRes.data
+    };
+  } catch (error) {
+    accountBalances.value = { from: null, to: null };
   }
 }
 

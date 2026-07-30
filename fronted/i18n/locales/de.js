@@ -4,7 +4,8 @@ export default {
     title: 'Zahlungsverarbeitungssystem',
     navList: 'Zahlungen',
     navCreate: 'Erstellen',
-    navTrash: 'Zuletzt gelöscht'
+    navTrash: 'Zuletzt gelöscht',
+    navAccounts: 'Kontostände'
   },
   language: {
     label: 'Sprache',
@@ -63,12 +64,29 @@ export default {
       actions: 'Aktionen'
     }
   },
+  accounts: {
+    title: 'Kontostände',
+    hint: 'Diese eigenständige Kontoseite zeigt die aktuellen Guthabenstände und unterstützt die Filterung nach Kontonummer oder Kontoinhaber.',
+    keyword: 'Stichwort',
+    keywordPlaceholder: 'Nach Kontonummer oder Kontoinhaber suchen',
+    search: 'Suchen',
+    reset: 'Zurücksetzen',
+    empty: 'Keine Kontodatensätze gefunden',
+    columns: {
+      accountNo: 'Kontonummer',
+      ownerName: 'Inhaber',
+      currency: 'Währung',
+      status: 'Status',
+      balance: 'Aktuelles Guthaben'
+    }
+  },
   create: {
     title: 'Zahlung erstellen',
     fromAccount: 'Von Konto',
     fromAccountPlaceholder: 'z. B. ACC10001',
     toAccount: 'An Konto',
     toAccountPlaceholder: 'z. B. ACC20002',
+    checkBalance: 'Guthaben prüfen',
     amount: 'Betrag',
     currency: 'Währung',
     currencyPlaceholder: 'Währung auswählen',
@@ -98,6 +116,8 @@ export default {
     idempotencyKey: 'Idempotenzschlüssel',
     fromAccount: 'Von Konto',
     toAccount: 'An Konto',
+    fromAccountBalance: 'Aktuelles Guthaben Quellkonto',
+    toAccountBalance: 'Aktuelles Guthaben Zielkonto',
     amount: 'Betrag',
     currency: 'Währung',
     remark: 'Bemerkung',

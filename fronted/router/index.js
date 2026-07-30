@@ -4,6 +4,7 @@ import PaymentList from '../views/PaymentList.vue';
 import PaymentCreate from '../views/PaymentCreate.vue';
 import PaymentDetail from '../views/PaymentDetail.vue';
 import PaymentTrash from '../views/PaymentTrash.vue';
+import AccountBalances from '../views/AccountBalances.vue';
 
 const routes = [
   {
@@ -20,6 +21,11 @@ const routes = [
     path: '/payments/recycle-bin',
     name: 'PaymentTrash',
     component: PaymentTrash
+  },
+  {
+    path: '/accounts/balances',
+    name: 'AccountBalances',
+    component: AccountBalances
   },
   {
     path: '/payments/:id',

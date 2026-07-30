@@ -4,7 +4,8 @@ export default {
     title: '支付处理系统',
     navList: '支付列表',
     navCreate: '创建支付',
-    navTrash: '最近删除'
+    navTrash: '最近删除',
+    navAccounts: '账户余额'
   },
   language: {
     label: '语言',
@@ -63,12 +64,29 @@ export default {
       actions: '操作'
     }
   },
+  accounts: {
+    title: '账户余额',
+    hint: '独立账户页会展示当前系统中的账户余额快照，可按账户号或户主名称过滤。',
+    keyword: '关键字',
+    keywordPlaceholder: '按账户号或户主名称搜索',
+    search: '查询',
+    reset: '重置',
+    empty: '暂无账户记录',
+    columns: {
+      accountNo: '账户号',
+      ownerName: '户主',
+      currency: '货币',
+      status: '状态',
+      balance: '当前余额'
+    }
+  },
   create: {
     title: '创建支付',
     fromAccount: '付款账户',
     fromAccountPlaceholder: '例如 ACC10001',
     toAccount: '收款账户',
     toAccountPlaceholder: '例如 ACC20002',
+    checkBalance: '查询余额',
     amount: '金额',
     currency: '货币',
     currencyPlaceholder: '请选择货币',
@@ -98,6 +116,8 @@ export default {
     idempotencyKey: '幂等键',
     fromAccount: '付款账户',
     toAccount: '收款账户',
+    fromAccountBalance: '付款账户当前余额',
+    toAccountBalance: '收款账户当前余额',
     amount: '金额',
     currency: '货币',
     remark: '备注',

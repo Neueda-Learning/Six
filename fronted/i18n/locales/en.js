@@ -4,7 +4,8 @@ export default {
     title: 'Payments Processing System',
     navList: 'Payments',
     navCreate: 'Create',
-    navTrash: 'Recently Deleted'
+    navTrash: 'Recently Deleted',
+    navAccounts: 'Account Balances'
   },
   language: {
     label: 'Language',
@@ -63,12 +64,29 @@ export default {
       actions: 'Actions'
     }
   },
+  accounts: {
+    title: 'Account Balances',
+    hint: 'This standalone account page shows the latest balance snapshot and supports filtering by account number or owner name.',
+    keyword: 'Keyword',
+    keywordPlaceholder: 'Search by account number or owner name',
+    search: 'Search',
+    reset: 'Reset',
+    empty: 'No account records found',
+    columns: {
+      accountNo: 'Account No.',
+      ownerName: 'Owner',
+      currency: 'Currency',
+      status: 'Status',
+      balance: 'Current Balance'
+    }
+  },
   create: {
     title: 'Create Payment',
     fromAccount: 'From Account',
     fromAccountPlaceholder: 'e.g. ACC10001',
     toAccount: 'To Account',
     toAccountPlaceholder: 'e.g. ACC20002',
+    checkBalance: 'Check Balance',
     amount: 'Amount',
     currency: 'Currency',
     currencyPlaceholder: 'Select currency',
@@ -98,6 +116,8 @@ export default {
     idempotencyKey: 'Idempotency Key',
     fromAccount: 'From Account',
     toAccount: 'To Account',
+    fromAccountBalance: 'Current From Balance',
+    toAccountBalance: 'Current To Balance',
     amount: 'Amount',
     currency: 'Currency',
     remark: 'Remark',
