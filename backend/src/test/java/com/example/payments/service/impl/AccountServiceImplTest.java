@@ -88,4 +88,61 @@ class AccountServiceImplTest {
     assertEquals(new BigDecimal("99988.89"), response.get(0).getBalance());
     assertEquals("ACC20001", response.get(1).getAccountNo());
   }
+
+  // 不传关键字（对应前端账户余额页初次打开、尚未输入搜索词的场景），应返回 Mapper 提供的全部账户，顺序保持不变
+  @Test
+  void listAccounts_blankKeyword_returnsAllAccountsInMapperOrder() {
+    Account first = new Account();
+    first.setAccountNo("ACC10001");
+    first.setOwnerName("Alice Zhang");
+    first.setCurrency("USD");
+    first.setStatus("ACTIVE");
+    first.setBalance(new BigDecimal("1500.00"));
+
+    Account second = new Account();
+    second.setAccountNo("ACC10002");
+    second.setOwnerName("Bob Chen");
+    second.setCurrency("EUR");
+    second.setStatus("ACTIVE");
+    second.setBalance(new BigDecimal("800.00"));
+
+    when(accountMapper.selectList(any())).thenReturn(List.of(first, second));
+
+    List<AccountBalanceResponse> response = accountService.listAccounts(null);
+
+    assertEquals(2, response.size());
+    assertEquals("ACC10001", response.get(0).getAccountNo());
+    assertEquals("ACC10002", response.get(1).getAccountNo());
+  }
+
+  // 关键字为户主名（而非账户号），服务层应正确转发查询并映射结果——覆盖“按关键字可查到对应账户”里
+  // “关键字”不仅限于账户号这一种输入形式的场景
+  @Test
+  void listAccounts_keywordMatchesOwnerName_returnsMatchedAccount() {
+    Account matched = new Account();
+    matched.setAccountNo("ACC10003");
+    matched.setOwnerName("Cindy Wang");
+    matched.setCurrency("GBP");
+    matched.setStatus("ACTIVE");
+    matched.setBalance(new BigDecimal("300.50"));
+
+    when(accountMapper.selectList(any())).thenReturn(List.of(matched));
+
+    List<AccountBalanceResponse> response = accountService.listAccounts("Cindy");
+
+    assertEquals(1, response.size());
+    assertEquals("ACC10003", response.get(0).getAccountNo());
+    assertEquals("Cindy Wang", response.get(0).getOwnerName());
+    assertEquals(new BigDecimal("300.50"), response.get(0).getBalance());
+  }
+
+  // 关键字未命中任何账户，应返回空列表而不是抛异常，前端页面据此展示“暂无数据”的空状态
+  @Test
+  void listAccounts_keywordNoMatch_returnsEmptyList() {
+    when(accountMapper.selectList(any())).thenReturn(List.of());
+
+    List<AccountBalanceResponse> response = accountService.listAccounts("does-not-exist");
+
+    assertEquals(0, response.size());
+  }
 }

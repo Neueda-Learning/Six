@@ -206,4 +206,60 @@ class PaymentValidatorTest {
 
         assertEquals(false, paymentValidator.hasSufficientBalance("ACC10003", new BigDecimal("1.00")));
     }
+
+    // ---------- validateTransferCurrency（转账前的同币种复核，在 SENT->COMPLETED 实际执行扣款/入账前调用） ----------
+
+    // 源账户、目标账户、支付币种三者一致，应正常通过（不报异常）
+    @Test
+    void validateTransferCurrency_sameCurrency_passes() {
+        Account fromAccount = new Account();
+        fromAccount.setCurrency("USD");
+        Account toAccount = new Account();
+        toAccount.setCurrency("USD");
+        when(accountMapper.selectById("ACC10001")).thenReturn(fromAccount);
+        when(accountMapper.selectById("ACC20001")).thenReturn(toAccount);
+
+        assertDoesNotThrow(() -> paymentValidator.validateTransferCurrency("USD", "ACC10001", "ACC20001"));
+    }
+
+    // 源账户不存在，应抛出 INVALID_ACCOUNT
+    @Test
+    void validateTransferCurrency_fromAccountNotExist_throwsInvalidAccount() {
+        when(accountMapper.selectById("ACC99999")).thenReturn(null);
+
+        PaymentException ex = assertThrows(PaymentException.class,
+                () -> paymentValidator.validateTransferCurrency("USD", "ACC99999", "ACC20001"));
+
+        assertEquals(ErrorCode.INVALID_ACCOUNT.name(), ex.getErrorCode());
+    }
+
+    // 目标账户不存在，应抛出 INVALID_ACCOUNT
+    @Test
+    void validateTransferCurrency_toAccountNotExist_throwsInvalidAccount() {
+        Account fromAccount = new Account();
+        fromAccount.setCurrency("USD");
+        when(accountMapper.selectById("ACC10001")).thenReturn(fromAccount);
+        when(accountMapper.selectById("ACC99999")).thenReturn(null);
+
+        PaymentException ex = assertThrows(PaymentException.class,
+                () -> paymentValidator.validateTransferCurrency("USD", "ACC10001", "ACC99999"));
+
+        assertEquals(ErrorCode.INVALID_ACCOUNT.name(), ex.getErrorCode());
+    }
+
+    // 账户币种与支付币种不一致，应抛出 INVALID_CURRENCY（转账实际执行前的最后一道复核）
+    @Test
+    void validateTransferCurrency_currencyMismatch_throwsInvalidCurrency() {
+        Account fromAccount = new Account();
+        fromAccount.setCurrency("USD");
+        Account toAccount = new Account();
+        toAccount.setCurrency("EUR");
+        when(accountMapper.selectById("ACC10001")).thenReturn(fromAccount);
+        when(accountMapper.selectById("ACC20001")).thenReturn(toAccount);
+
+        PaymentException ex = assertThrows(PaymentException.class,
+                () -> paymentValidator.validateTransferCurrency("USD", "ACC10001", "ACC20001"));
+
+        assertEquals(ErrorCode.INVALID_CURRENCY.name(), ex.getErrorCode());
+    }
 }

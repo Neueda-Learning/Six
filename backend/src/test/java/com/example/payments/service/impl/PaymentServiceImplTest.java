@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -437,6 +438,69 @@ class PaymentServiceImplTest {
         assertEquals(ErrorCode.INSUFFICIENT_FUNDS.name(), ex.getErrorCode());
         verify(accountMapper, never()).creditBalance(any(), any());
         verify(paymentStatusHistoryMapper, never()).insert(any(PaymentStatusHistory.class));
+    }
+
+    // 扣款成功但入账失败（理论上不该发生，属于极端兼底场景），应抛出 PROCESSING_ERROR，
+    // 且不应该写入状态历史（本次流转视为未完成）
+    @Test
+    void updatePaymentStatus_sentToCompleted_whenCreditFails_throwsProcessingError() {
+        Payment payment = existingPayment(PaymentStatus.SENT);
+        when(paymentMapper.selectById(1L)).thenReturn(payment);
+        when(paymentStateMachine.canTransition(PaymentStatus.SENT, PaymentStatus.COMPLETED)).thenReturn(true);
+        when(accountMapper.debitBalance("ACC10001", new BigDecimal("100.00"))).thenReturn(1);
+        when(accountMapper.creditBalance("ACC20001", new BigDecimal("100.00"))).thenReturn(0);
+
+        UpdatePaymentStatusRequest request = new UpdatePaymentStatusRequest();
+        request.setTargetStatus("COMPLETED");
+
+        PaymentException ex = assertThrows(PaymentException.class,
+                () -> paymentService.updatePaymentStatus(1L, request));
+
+        assertEquals(ErrorCode.PROCESSING_ERROR.name(), ex.getErrorCode());
+        verify(paymentStatusHistoryMapper, never()).insert(any(PaymentStatusHistory.class));
+    }
+
+    /**
+     * 转账执行前会先调用 PaymentValidator.validateTransferCurrency 做一次同币种复核；
+     * 若该复核判定币种不一致（如账户数据被篡改导致与支付币种不符），应直接抛出异常，
+     * 且不应该执行任何扣款/入账操作。
+     */
+    @Test
+    void updatePaymentStatus_sentToCompleted_currencyMismatchDetectedBeforeTransfer_skipsDebitAndCredit() {
+        Payment payment = existingPayment(PaymentStatus.SENT);
+        when(paymentMapper.selectById(1L)).thenReturn(payment);
+        when(paymentStateMachine.canTransition(PaymentStatus.SENT, PaymentStatus.COMPLETED)).thenReturn(true);
+        doThrow(new PaymentException(ErrorCode.INVALID_CURRENCY.name(), "源账户、目标账户与支付币种必须一致",
+                org.springframework.http.HttpStatus.BAD_REQUEST))
+                .when(paymentValidator).validateTransferCurrency("USD", "ACC10001", "ACC20001");
+
+        UpdatePaymentStatusRequest request = new UpdatePaymentStatusRequest();
+        request.setTargetStatus("COMPLETED");
+
+        PaymentException ex = assertThrows(PaymentException.class,
+                () -> paymentService.updatePaymentStatus(1L, request));
+
+        assertEquals(ErrorCode.INVALID_CURRENCY.name(), ex.getErrorCode());
+        verify(accountMapper, never()).debitBalance(any(), any());
+        verify(accountMapper, never()).creditBalance(any(), any());
+        verify(paymentStatusHistoryMapper, never()).insert(any(PaymentStatusHistory.class));
+    }
+
+    // 正常转账时应确实调用了同币种复核（验证 applyBalanceTransfer 真的执行了这一步，而不是被跳过）
+    @Test
+    void updatePaymentStatus_sentToCompleted_verifiesTransferCurrencyValidationInvoked() {
+        Payment payment = existingPayment(PaymentStatus.SENT);
+        when(paymentMapper.selectById(1L)).thenReturn(payment);
+        when(paymentStateMachine.canTransition(PaymentStatus.SENT, PaymentStatus.COMPLETED)).thenReturn(true);
+        when(accountMapper.debitBalance("ACC10001", new BigDecimal("100.00"))).thenReturn(1);
+        when(accountMapper.creditBalance("ACC20001", new BigDecimal("100.00"))).thenReturn(1);
+
+        UpdatePaymentStatusRequest request = new UpdatePaymentStatusRequest();
+        request.setTargetStatus("COMPLETED");
+
+        paymentService.updatePaymentStatus(1L, request);
+
+        verify(paymentValidator).validateTransferCurrency("USD", "ACC10001", "ACC20001");
     }
 
     @Test
