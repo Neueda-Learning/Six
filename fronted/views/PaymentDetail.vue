@@ -16,7 +16,7 @@
           <div class="card-header">
             <div class="header-main">
               <span class="card-title">{{ t('detail.basicInfo') }}</span>
-              <el-tag :type="statusTagType(payment.status)" effect="dark">{{ payment.status }}</el-tag>
+              <el-tag :type="statusTagType(payment.status)" effect="dark">{{ paymentStatusLabel(payment.status) }}</el-tag>
             </div>
             <div class="header-actions">
               <span v-if="isPolling" class="polling-hint"><i class="polling-dot"></i>{{ t('detail.autoRefreshing') }}</span>
@@ -73,7 +73,7 @@
             size="large"
           >
             <div class="timeline-title">
-              <strong>{{ item.fromStatus || t('detail.start') }} → {{ item.toStatus }}</strong>
+              <strong>{{ paymentStatusLabel(item.fromStatus) || t('detail.start') }} → {{ paymentStatusLabel(item.toStatus) }}</strong>
               <el-tag size="small" type="info" effect="plain" class="operator-tag">{{ item.operator }}</el-tag>
             </div>
             <div v-if="item.errorCode" class="history-error">
@@ -95,6 +95,7 @@ import { getAccountBalance } from '../api/account';
 import { getPaymentById, getPaymentHistory } from '../api/payment';
 import { formatDateTime } from '../utils/datetime';
 import { Clock } from '@element-plus/icons-vue';
+import { getPaymentStatusLabel } from '../utils/paymentStatus';
 
 const POLLING_INTERVAL_MS = 5000;
 
@@ -128,6 +129,10 @@ function formatBalanceSnapshot(snapshot) {
     return '-';
   }
   return `${snapshot.ownerName} · ${n(snapshot.balance, { key: 'currency', currency: snapshot.currency })}`;
+}
+
+function paymentStatusLabel(status) {
+  return getPaymentStatusLabel(status, t, te);
 }
 
 /**

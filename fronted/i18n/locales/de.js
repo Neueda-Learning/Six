@@ -13,6 +13,13 @@ export default {
     en: 'English',
     de: 'Deutsch'
   },
+  paymentStatus: {
+    CREATED: 'Erstellt',
+    VALIDATED: 'Geprüft',
+    SENT: 'Gesendet',
+    COMPLETED: 'Abgeschlossen',
+    FAILED: 'Fehlgeschlagen'
+  },
   list: {
     title: 'Zahlungsliste',
     newPayment: 'Neue Zahlung',

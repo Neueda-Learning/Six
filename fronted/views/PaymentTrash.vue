@@ -42,7 +42,7 @@
       </el-table-column>
       <el-table-column :label="t('trash.columns.status')" width="130" align="center">
         <template #default="{ row }">
-          <el-tag :type="statusTagType(row.status)" effect="light">{{ row.status }}</el-tag>
+          <el-tag :type="statusTagType(row.status)" effect="light">{{ paymentStatusLabel(row.status) }}</el-tag>
         </template>
       </el-table-column>
       <el-table-column prop="remark" :label="t('trash.columns.remark')" show-overflow-tooltip min-width="180" />
@@ -100,8 +100,13 @@ import { ElMessage } from 'element-plus';
 import { Search, RefreshLeft, Delete } from '@element-plus/icons-vue';
 import { listDeletedPayments, permanentlyDeletePayment, restorePayment } from '../api/payment';
 import { formatDateTime } from '../utils/datetime';
+import { getPaymentStatusLabel } from '../utils/paymentStatus';
 
-const { t } = useI18n();
+const { t, te } = useI18n();
+
+function paymentStatusLabel(status) {
+  return getPaymentStatusLabel(status, t, te);
+}
 
 const query = reactive({
   keyword: '',

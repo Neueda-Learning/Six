@@ -21,7 +21,12 @@
       <el-form :inline="true" class="filter-bar">
         <el-form-item :label="t('list.status')">
           <el-select v-model="query.status" :placeholder="t('list.allStatuses')" clearable style="width: 180px">
-            <el-option v-for="item in statusOptions" :key="item" :label="item" :value="item" />
+            <el-option
+              v-for="item in statusOptions"
+              :key="item"
+              :label="paymentStatusLabel(item)"
+              :value="item"
+            />
           </el-select>
         </el-form-item>
 
@@ -76,7 +81,7 @@
       <el-table-column :label="t('list.columns.status')" width="130" align="center">
         <template #default="{ row }">
           <!-- 状态标签颜色映射：COMPLETED 绿色、FAILED 红色、SENT 黄色、CREATED/VALIDATED 灰蓝 -->
-          <el-tag :type="statusTagType(row.status)" effect="light">{{ row.status }}</el-tag>
+          <el-tag :type="statusTagType(row.status)" effect="light">{{ paymentStatusLabel(row.status) }}</el-tag>
         </template>
       </el-table-column>
       <el-table-column prop="remark" :label="t('list.columns.remark')" show-overflow-tooltip min-width="160" />
@@ -121,6 +126,7 @@ import { ElMessage } from 'element-plus';
 import { Search, RefreshLeft, CirclePlus, List } from '@element-plus/icons-vue';
 import { listPayments, softDeletePayment } from '../api/payment';
 import { formatDateTime } from '../utils/datetime';
+import { getPaymentStatusLabel, PAYMENT_STATUS_OPTIONS } from '../utils/paymentStatus';
 
 // 后端自动推进调度（PaymentAutoTransitionScheduler）每 5 秒推进一步，前端轮询间隔与之对齐，
 // 保证列表页能在后端状态变化后尽快看到最新结果，而不需要手动点“查询”。
@@ -128,7 +134,7 @@ const POLLING_INTERVAL_MS = 5000;
 
 const router = useRouter();
 const route = useRoute();
-const { t, n } = useI18n();
+const { t, n, te } = useI18n();
 
 // 按支付自己的币种格式化金额：千分位分隔符/小数点符号随当前界面语言自动切换，
 // 货币符号则个据每笔支付自己的 currency 字段决定（不受界面语言影响）。
@@ -137,7 +143,11 @@ function formatAmount(amount, currency) {
 }
 
 // 状态下拉选项：与后端 PaymentStatus 枚举保持一致
-const statusOptions = ['CREATED', 'VALIDATED', 'SENT', 'COMPLETED', 'FAILED'];
+const statusOptions = PAYMENT_STATUS_OPTIONS;
+
+function paymentStatusLabel(status) {
+  return getPaymentStatusLabel(status, t, te);
+}
 
 // 查询条件：page/size 与后端分页参数命名一致，status 为空表示不筛选。
 // 初始值优先从当前路由 query 参数读取，这样从详情页返回列表页时（地址栏已带有之前的筛选条件）

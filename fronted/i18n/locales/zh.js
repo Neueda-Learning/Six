@@ -13,6 +13,13 @@ export default {
     en: 'English',
     de: 'Deutsch'
   },
+  paymentStatus: {
+    CREATED: '已创建',
+    VALIDATED: '已校验',
+    SENT: '已发送',
+    COMPLETED: '已完成',
+    FAILED: '失败'
+  },
   list: {
     title: '支付列表',
     newPayment: '新建支付',
