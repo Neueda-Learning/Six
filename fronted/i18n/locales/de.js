@@ -140,11 +140,13 @@ export default {
     VALIDATION_FAILED: 'Grundlegende Validierung der Formularfelder fehlgeschlagen',
     INSUFFICIENT_FUNDS: 'Unzureichendes verfügbares Guthaben auf dem Quellkonto',
     INVALID_ACCOUNT: 'Ungültiges Kontoformat oder das Konto existiert nicht',
-    INVALID_CURRENCY: 'Nicht unterstützter oder ungültiger Währungscode',
+    INVALID_CURRENCY: 'Quellkonto, Zielkonto und Zahlungswährung müssen übereinstimmen',
     INVALID_AMOUNT: 'Betrag ist null, negativ oder überschreitet das Einzeltransaktionslimit',
     DUPLICATE_PAYMENT: 'Konflikt beim Idempotenzschlüssel; die Zahlung wird bereits verarbeitet',
     INVALID_STATUS_TRANSITION: 'Unzulässiger oder rückwärtsgerichteter Statusübergang versucht',
     PAYMENT_NOT_FOUND: 'Die angeforderte Zahlungs-ID existiert nicht',
+    RECYCLE_BIN_RECORD_NOT_FOUND: 'Papierkorb-Eintrag existiert nicht oder kann nicht mehr wiederhergestellt werden',
+    RESOURCE_NOT_FOUND: 'Die angeforderte Ressource existiert nicht',
     PROCESSING_ERROR: 'Unerwarteter interner Serverfehler',
     NETWORK_ERROR: 'Simulierter Kanal-Timeout, Wiederholungsversuche ausgeschöpft'
   }

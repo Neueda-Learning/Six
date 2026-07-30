@@ -25,15 +25,30 @@ function pickErrorMessage(payload) {
   return '';
 }
 
+function pickLocalizedErrorMessage(payload) {
+  if (!payload || typeof payload !== 'object') {
+    return '';
+  }
+
+  const errorCode = typeof payload.errorCode === 'string' ? payload.errorCode.trim() : '';
+  const translationKey = errorCode ? `errors.${errorCode}` : '';
+  if (translationKey && i18n.global.te(translationKey)) {
+    return i18n.global.t(translationKey);
+  }
+
+  return '';
+}
+
 http.interceptors.response.use(
   (response) => {
     // 后端统一响应信封结构为 { success, data, errorCode, message }
     const body = response.data;
 
     // 业务失败（success === false）：统一弹出错误提示，并以 reject 方式抛出，方便页面 catch 后做后续处理
-    // 后端返回的 message 本身不做翻译（由后端决定语言），仅当后端未提供 message 时才使用前端本地化的兜底文案
+    // 顶部 tips 优先使用 errorCode 对应的前端本地化文案，确保切换语言后错误提示同步变化；
+    // 若前端没有收录该错误码，再回退到后端返回的 message。
     if (body && body.success === false) {
-      ElMessage.error(body.message || i18n.global.t('http.requestFailed'));
+      ElMessage.error(pickLocalizedErrorMessage(body) || body.message || i18n.global.t('http.requestFailed'));
       return Promise.reject(body);
     }
 
@@ -42,8 +57,11 @@ http.interceptors.response.use(
   },
   (error) => {
     // 网络异常或非 2xx 状态码：尝试从后端错误响应体中取出 message，否则退回到前端本地化的兜底文案
-    const backendMessage = pickErrorMessage(error.response && error.response.data);
-    ElMessage.error(backendMessage || error.message || i18n.global.t('http.networkError'));
+    const payload = error.response && error.response.data;
+    const backendMessage = pickErrorMessage(payload);
+    ElMessage.error(
+      pickLocalizedErrorMessage(payload) || backendMessage || error.message || i18n.global.t('http.networkError')
+    );
     return Promise.reject(error);
   }
 );

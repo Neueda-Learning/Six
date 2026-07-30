@@ -140,11 +140,13 @@ export default {
     VALIDATION_FAILED: '基础表单字段格式校验失败',
     INSUFFICIENT_FUNDS: '付款账户可用余额不足',
     INVALID_ACCOUNT: '账户格式非法或账户不存在',
-    INVALID_CURRENCY: '不支持的或不合规的货币代码',
+    INVALID_CURRENCY: '源账户、目标账户与支付币种必须一致，不支持跨币种转账',
     INVALID_AMOUNT: '金额为零、负数或超过单笔限额',
     DUPLICATE_PAYMENT: '幂等键冲突，该支付正在处理中',
     INVALID_STATUS_TRANSITION: '企图越级或逆向流转状态',
     PAYMENT_NOT_FOUND: '检索的支付记录不存在',
+    RECYCLE_BIN_RECORD_NOT_FOUND: '回收站记录不存在或已超过恢复期限',
+    RESOURCE_NOT_FOUND: '请求的资源不存在',
     PROCESSING_ERROR: '后端运行时发生非预期异常',
     NETWORK_ERROR: '模拟通道通信超时且重试次数耗尽'
   }

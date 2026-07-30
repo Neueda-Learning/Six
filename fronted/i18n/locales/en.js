@@ -140,11 +140,13 @@ export default {
     VALIDATION_FAILED: 'Basic form field validation failed',
     INSUFFICIENT_FUNDS: 'Insufficient available balance in the source account',
     INVALID_ACCOUNT: 'Invalid account format or the account does not exist',
-    INVALID_CURRENCY: 'Unsupported or non-compliant currency code',
+    INVALID_CURRENCY: 'Source account, destination account, and payment currency must match',
     INVALID_AMOUNT: 'Amount is zero, negative, or exceeds the single-transaction limit',
     DUPLICATE_PAYMENT: 'Idempotency key conflict; the payment is already being processed',
     INVALID_STATUS_TRANSITION: 'Attempted an illegal or backward status transition',
     PAYMENT_NOT_FOUND: 'The requested payment ID does not exist',
+    RECYCLE_BIN_RECORD_NOT_FOUND: 'Recycle bin record does not exist or is no longer recoverable',
+    RESOURCE_NOT_FOUND: 'The requested resource does not exist',
     PROCESSING_ERROR: 'An unexpected backend runtime error occurred',
     NETWORK_ERROR: 'Simulated channel communication timed out and retries were exhausted'
   }
