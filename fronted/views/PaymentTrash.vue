@@ -31,32 +31,40 @@
     </div>
 
     <!-- header-cell-style 让表头文字统一居中，不影响各列正文内容原本的对齐方式 -->
-    <el-table v-loading="loading" :data="tableData" stripe :header-cell-style="{ textAlign: 'center' }">
-      <el-table-column prop="id" :label="t('trash.columns.paymentId')" width="110" align="center" />
+    <el-table
+      v-loading="loading"
+      :data="tableData"
+      stripe
+      border
+      table-layout="auto"
+      :allow-drag-last-column="true"
+      :header-cell-style="{ textAlign: 'center' }"
+    >
+      <el-table-column prop="id" :label="t('trash.columns.paymentId')" min-width="110" align="center" />
       <el-table-column prop="fromAccount" :label="t('trash.columns.fromAccount')" min-width="130" align="center" />
       <el-table-column prop="toAccount" :label="t('trash.columns.toAccount')" min-width="130" align="center" />
-      <el-table-column :label="t('trash.columns.amount')" width="150" align="center">
+      <el-table-column :label="t('trash.columns.amount')" min-width="150" align="center">
         <template #default="{ row }">
           <span class="amount-cell">{{ row.amount }} {{ row.currency }}</span>
         </template>
       </el-table-column>
-      <el-table-column :label="t('trash.columns.status')" width="130" align="center">
+      <el-table-column :label="t('trash.columns.status')" min-width="130" align="center">
         <template #default="{ row }">
           <el-tag :type="statusTagType(row.status)" effect="light">{{ paymentStatusLabel(row.status) }}</el-tag>
         </template>
       </el-table-column>
       <el-table-column prop="remark" :label="t('trash.columns.remark')" show-overflow-tooltip min-width="180" />
-      <el-table-column :label="t('trash.columns.deletedAt')" width="180" align="center">
+      <el-table-column :label="t('trash.columns.deletedAt')" min-width="180" align="center">
         <template #default="{ row }">
           {{ formatDateTime(row.deletedAt) }}
         </template>
       </el-table-column>
-      <el-table-column :label="t('trash.columns.recoverableUntil')" width="180" align="center">
+      <el-table-column :label="t('trash.columns.recoverableUntil')" min-width="180" align="center">
         <template #default="{ row }">
           {{ formatDateTime(row.recoverableUntil) }}
         </template>
       </el-table-column>
-      <el-table-column :label="t('trash.columns.actions')" width="200" align="center" fixed="right">
+      <el-table-column :label="t('trash.columns.actions')" min-width="200" align="center" fixed="right">
         <template #default="{ row }">
           <div class="action-group">
             <el-button link type="primary" @click="handleRestore(row)">{{ t('trash.restore') }}</el-button>

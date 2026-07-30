@@ -67,30 +67,33 @@
       @row-click="handleRowClick"
       class="clickable-table"
       stripe
+      border
+      table-layout="auto"
+      :allow-drag-last-column="true"
       :header-cell-style="{ textAlign: 'center' }"
     >
-      <el-table-column type="index" :label="t('list.columns.index')" width="56" align="center" />
-      <el-table-column prop="id" :label="t('list.columns.paymentId')" width="110" align="center" />
+      <el-table-column type="index" :label="t('list.columns.index')" min-width="56" align="center" />
+      <el-table-column prop="id" :label="t('list.columns.paymentId')" min-width="110" align="center" />
       <el-table-column prop="fromAccount" :label="t('list.columns.fromAccount')" min-width="130" align="center" />
       <el-table-column prop="toAccount" :label="t('list.columns.toAccount')" min-width="130" align="center" />
-      <el-table-column :label="t('list.columns.amount')" width="150" align="center">
+      <el-table-column :label="t('list.columns.amount')" min-width="150" align="center">
         <template #default="{ row }">
           <span class="amount-cell">{{ formatAmount(row.amount, row.currency) }}</span>
         </template>
       </el-table-column>
-      <el-table-column :label="t('list.columns.status')" width="130" align="center">
+      <el-table-column :label="t('list.columns.status')" min-width="130" align="center">
         <template #default="{ row }">
           <!-- 状态标签颜色映射：COMPLETED 绿色、FAILED 红色、SENT 黄色、CREATED/VALIDATED 灰蓝 -->
           <el-tag :type="statusTagType(row.status)" effect="light">{{ paymentStatusLabel(row.status) }}</el-tag>
         </template>
       </el-table-column>
       <el-table-column prop="remark" :label="t('list.columns.remark')" show-overflow-tooltip min-width="160" />
-      <el-table-column :label="t('list.columns.createdAt')" width="180">
+      <el-table-column :label="t('list.columns.createdAt')" min-width="180">
         <template #default="{ row }">
           {{ formatDateTime(row.createdAt) }}
         </template>
       </el-table-column>
-      <el-table-column :label="t('list.columns.actions')" width="140" align="center" fixed="right">
+      <el-table-column :label="t('list.columns.actions')" min-width="140" align="center" fixed="right">
         <template #default="{ row }">
           <el-button link type="danger" @click.stop="handleMoveToTrash(row)">
             {{ t('list.moveToTrash') }}
