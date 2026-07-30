@@ -156,8 +156,8 @@ function handleLocaleChange(command) {
   box-shadow: 0 26px 50px rgba(12, 36, 79, 0.24);
   border: 1px solid rgba(255, 255, 255, 0.18);
   backdrop-filter: blur(20px);
-  padding: 14px 22px;
-  margin: 12px 12px 0;
+  padding: 14px 24px;
+  margin: 18px 18px 0;
   border-radius: 26px;
   min-height: 78px;
   box-sizing: border-box;
@@ -337,7 +337,7 @@ function handleLocaleChange(command) {
     justify-items: center;
     min-height: auto;
     padding: 16px 20px;
-    margin: 10px 10px 0;
+    margin: 18px 18px 0;
     gap: 12px;
   }
 
